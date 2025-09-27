@@ -5,10 +5,42 @@
   },
   "hero": {
     "title": "Apartamento en La Patacona — terraza y a pasos de la playa",
-    "desc": "Descubre este acogedor apartamento en un complejo familiar. Perfecto para parejas y familias pequeñas: terraza, Wi-Fi de alta velocidad y cocina completamente equipada.",
+    "description": "Descubre este acogedor apartamento en un complejo familiar. Perfecto para parejas y familias pequeñas: terraza, Wi-Fi de alta velocidad y cocina completamente equipada.",
     "book": "Comprobar disponibilidad"
   },
   "features": {
+    "terrace": {
+      "title": "Terraza",
+      "description": "Terraza orientada al sur con muebles de exterior, perfecta para relajarse después de un día en la playa o explorando la ciudad."
+    },
+    "location": {
+      "title": "Ubicación",
+      "description": "Situado en La Patacona, a solo una calle de la playa y a 15 minutos del centro de Valencia en autobús directo. Disfruta de restaurantes, bares y actividades cercanas."
+    },
+    "beach": {
+      "title": "Playa",
+      "description": "Muy cerca de la playa de La Patacona, conocida por su fina arena y aguas tranquilas. Perfecta para familias y actividades acuáticas."
+    },
+    "pool": {
+      "title": "Piscina",
+      "description": "Piscina grande y piscina infantil con socorrista, perfecta para un refrescante baño. Zona de juegos para niños y área de descanso con césped."
+    },
+    "padel": {
+      "title": "Pádel",
+      "description": "Pistas de pádel disponibles para los huéspedes. Disfruta de un partido en un ambiente agradable y deportivo."
+    },
+    "kids": {
+      "title": "Niños",
+      "description": "Zona infantil privada dentro del complejo, ideal para que los más pequeños se diviertan en un entorno seguro."
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "description": "Conexión Wi-Fi de alta velocidad gratuita en todo el apartamento, perfecta para trabajar o disfrutar de contenidos en línea."
+    },
+    "parking": {
+      "title": "Aparcamiento",
+      "description": "Aparcamiento en garaje privado incluido, con acceso directo al apartamento."
+    },
     "title": "Qué ofrece",
     "items": {
       "seaAccess": "Acceso a la playa",
@@ -48,5 +80,9 @@
     "bookNow": "Reserva ahora",
     "airbnb": "Reserva en Airbnb",
     "booking": "Reserva en Booking.com"
+  },
+  "testimonials": {
+    "title": "Reseñas de los huéspedes",
+    "placeholder": "Este alojamiento tiene 20 reseñas en Airbnb y una puntuación media de 4,95"
   }
 }

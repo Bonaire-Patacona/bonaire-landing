@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-
+html {
+  scroll-behavior: smooth;
+}
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
 

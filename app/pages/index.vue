@@ -1,38 +1,57 @@
 <template>
   <div>
     <UPageHero
+      :class="[$colorMode.value === 'dark' ? 'hero-home dark' : 'hero-home']"
       :title="$t('site.title')"
       :description="$t('site.subtitle')"
-      :image="{ src: '@/assets/images/collage.jpeg', alt: 'Bonaire Patacona' }"
+      orientation="horizontal"
       :links="[{
         label: $t('cta.bookNow'),
         to: '#cta',
         trailingIcon: 'i-lucide-arrow-right',
         size: 'xl'
       }]"
-    />
+    >
+      <img
+        src="/assets/images/collage.jpeg"
+        alt="Bonaire Patacona"
+        class="rounded-lg shadow-2xl ring ring-default"
+      >
+    </UPageHero>
 
     <!-- Carousel Section -->
-    <UPageSection class="pt-0">
+    <UPageSection
+      id="gallery"
+      :title="$t('gallery.title')"
+      :ui="{
+        root: 'w-full',
+        container: 'max-w-4xl mx-auto px-4 py-6',
+        content: 'flex flex-col gap-6'
+      }"
+    >
       <UCarousel
-        :images="[
-          { src: '/assets/images/living-room.jpg', alt: 'Living room' },
-          { src: '/assets/images/main-bedroom.jpg', alt: 'Main Bedroom' },
-          { src: '/assets/images/twin-bedroom.jpg', alt: 'Twin-bed bedroom' },
-          { src: '/assets/images/pool.jpg', alt: 'Pool' },
-          { src: '/assets/images/beach-night.jpg', alt: 'Beach' },
-          { src: '/assets/images/kitchen.jpg', alt: 'Kitchen' },
-          { src: '/assets/images/bathroom.jpg', alt: 'Bathroom' }
-        ]"
-        :height="400"
-        :options="{ loop: true, autoplay: true, autoplayTimeout: 5000 }"
-      />
+        v-slot="{ item }"
+        loop
+        arrows
+        dots
+        :autoplay="{ delay: 3000 }"
+        :items="items"
+        :ui="{ item: 'basis-1/3' }"
+      >
+        <img
+          :src="item"
+          width="350"
+          height="250"
+          class="rounded-lg"
+        >
+      </UCarousel>
     </UPageSection>
 
     <!-- Features Section -->
 
     <UPageSection
       id="features"
+      :ui="{ container: 'py-4 px-4' }"
       :title="$t('hero.title')"
       :description="$t('hero.description')"
       :features="[{
@@ -40,13 +59,9 @@
         description: $t('features.location.description'),
         icon: 'i-lucide-map-pin'
       }, {
-        title: $t('features.beach.title'),
-        description: $t('features.beach.description'),
-        icon: 'i-lucide-beach'
-      }, {
         title: $t('features.pool.title'),
         description: $t('features.pool.description'),
-        icon: 'i-lucide-swimming-pool'
+        icon: 'icon-park-solid:swimming-ring'
       }, {
         title: $t('features.wifi.title'),
         description: $t('features.wifi.description'),
@@ -54,15 +69,19 @@
       }, {
         title: $t('features.terrace.title'),
         description: $t('features.terrace.description'),
-        icon: 'i-lucide-sun'
+        icon: 'streamline-freehand:donation-charity-donate-heart-flower'
       }, {
         title: $t('features.parking.title'),
         description: $t('features.parking.description'),
         icon: 'i-lucide-car'
+      }, {
+        title: $t('features.padel.title'),
+        description: $t('features.padel.description'),
+        icon: 'streamline-flex:ball-solid'
       }]"
     />
 
-    <UPageSection>
+    <UPageSection :ui="{ container: 'py-4 px-4' }">
       <UPageCTA
         id="cta"
         :title="$t('cta.title')"
@@ -72,16 +91,73 @@
           label: $t('cta.airbnb'),
           to: 'https://airbnb.es/h/bonaire-patacona',
           target: '_blank',
-          trailingIcon: 'i-lucide-arrow-right',
-          color: 'primary'
+          trailingIcon: 'fa6-brands:airbnb',
+          color: 'airbnb'
         }, {
           label: $t('cta.booking'),
           to: 'https://www.booking.com/hotel/es/patacona-playa-piscina-wifi-terraza-bonaire.es.html?aid=356980&label=gog235jc-10CAsoRkIrcGF0YWNvbmEtcGxheWEtcGlzY2luYS13aWZpLXRlcnJhemEtYm9uYWlyZUgEWANoRogBAZgBM7gBB8gBDdgBA-gBAfgBAYgCAagCAbgC26DfxgbAAgHSAiQzMTFlMDI5Yi1iM2ZjLTRlMTgtYmU4My1lZTZkOTc3NGJkNjHYAgHgAgE&sid=21d5e448f7e4a52f547b06916a18b02e&dist=0&keep_landing=1&sb_price_type=total&type=total&',
           target: '_blank',
-          trailingIcon: 'i-lucide-arrow-right',
+          trailingIcon: 'fa-brands:bootstrap',
           color: 'secondary'
         }]"
       />
     </UPageSection>
+    <UPageSection
+      id="testimonials"
+      :title="$t('testimonials.title')"
+      :description="$t('testimonials.placeholder')"
+    >
+      <TestimonialsComponent />
+    </UPageSection>
   </div>
 </template>
+
+<script setup>
+import livingRoom from '~/assets/images/living-room.jpg'
+import livingRoom2 from '~/assets/images/living-room-2.jpg'
+import mainBedroom from '~/assets/images/main-bedroom.jpg'
+import kitchen from '~/assets/images/kitchen.jpg'
+import twinBedroom from '~/assets/images/twin-bedroom.jpeg'
+import pool from '~/assets/images/pool.jpg'
+import padelCourts from '~/assets/images/padel-courts.jpg'
+import beach from '~/assets/images/beach.jpeg'
+import beachNight from '~/assets/images/beach-night.jpeg'
+import beach2 from '~/assets/images/beach-2.jpeg'
+import kids from '~/assets/images/kids.jpg'
+import kids2 from '~/assets/images/kids-2.jpg'
+import kids3 from '~/assets/images/kids-3.jpg'
+import terrace from '~/assets/images/terrace.jpg'
+import bathroom from '~/assets/images/bathroom.jpg'
+
+import TestimonialsComponent from '~/components/TestimonialsComponent.vue'
+
+const items = [
+  livingRoom,
+  livingRoom2,
+  terrace,
+  mainBedroom,
+  twinBedroom,
+  bathroom,
+  kitchen,
+  pool,
+  padelCourts,
+  kids,
+  kids2,
+  kids3,
+  beach,
+  beach2,
+  beachNight
+]
+</script>
+
+<style scoped>
+.hero-home {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6)), url('/assets/images/beach-night.jpeg');
+  background-size: cover;
+  background-position: center;
+}
+
+.dark .hero-home {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6)), url('/assets/images/beach-night.jpeg');
+}
+</style>

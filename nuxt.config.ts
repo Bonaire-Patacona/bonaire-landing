@@ -8,6 +8,20 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  ui: {
+    theme: {
+      colors: [
+        'primary',
+        'secondary',
+        'airbnb',
+        'info',
+        'success',
+        'warning',
+        'error'
+      ]
+    }
+  },
+
   routeRules: {
     '/': { prerender: true }
   },

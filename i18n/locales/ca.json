@@ -5,10 +5,42 @@
   },
   "hero": {
     "title": "Apartament a La Patacona — terrassa i a pocs passos de la platja",
-    "desc": "Descobreix la màgia de la Patacona en aquest acollidor apartament en un complex turístic. Ideal per a parelles i famílies, amb terrassa, Wi-Fi d'alta velocitat i cuina equipada.",
+    "description": "Descobreix la màgia de la Patacona en aquest acollidor apartament en un complex turístic. Ideal per a parelles i famílies, amb terrassa, Wi-Fi d'alta velocitat i cuina equipada.",
     "book": "Comprovar disponibilitat"
   },
   "features": {
+    "terrace": {
+      "title": "Terrassa",
+      "description": "Terrassa orientada al sud amb mobles d'exterior, perfecta per relaxar-se després d'un dia a la platja o explorant la ciutat."
+    },
+    "location": {
+      "title": "Ubicació",
+      "description": "Situat a La Patacona, a només 1 carrer de la platja i a 15 minuts del centre de València amb autobús directe. Gaudeix de restaurants, bars i activitats a prop."
+    },
+    "beach": {
+      "title": "Platja",
+      "description": "Molt a prop de la platja de La Patacona, coneguda per la seva sorra fina i aigües tranquil·les. Ideal per a famílies i activitats aquàtiques."  
+    },
+    "pool": {
+      "title": "Piscina",
+      "description": "Piscina gran i infantil amb socorrista, perfecta per a un bany refrescant. Zona de jocs per a nens i àrea de descans amb gespa."  
+    },
+    "padel": {
+      "title": "Pàdel",
+      "description": "Pistes de pàdel disponibles per als hostes. Gaudeix d'un partit en un entorn agradable i esportiu."  
+    },
+    "kids": {
+      "title": "Nens",
+      "description": "Parc infantil privat dins del complex, ideal per a que els més petits es diverteixin en un entorn segur."  
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "description": "Connexió Wi-Fi d'alta velocitat gratuïta a tot l'apartament, perfecta per a treballar o gaudir de continguts en línia."  
+    },
+    "parking": {
+      "title": "Aparcament",
+      "description": "Aparcament en garatge privat inclòs, amb accés directe a l'apartament."  
+    },
     "title": "Què ofereix",
     "items": {
       "seaAccess": "Accés a la platja",
@@ -48,5 +80,9 @@
     "bookNow": "Reserva ara",
     "airbnb": "Reserva a Airbnb",
     "booking": "Reserva a Booking.com"
+  },
+  "testimonials": {
+    "title": "Ressenyes dels hostes",
+    "placeholder": "Aquest allotjament té a Airbnb 20 ressenyes i una puntuació mitjana de 4,95"
   }
 }

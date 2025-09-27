@@ -5,10 +5,42 @@
   },
   "hero": {
     "title": "Seaside apartment at La Patacona — terrace & steps to the beach",
-    "desc": "Enjoy this cozy apartment in a family-friendly complex. Perfect for couples and small families — terrace, high-speed Wi-Fi and a fully equipped kitchen.",
+    "description": "Enjoy this cozy apartment in a family-friendly complex. Perfect for couples and small families — terrace, high-speed Wi-Fi and a fully equipped kitchen.",
     "book": "Check availability"
   },
   "features": {
+    "terrace": {
+      "title": "Terrace",
+      "description": "South-facing terrace with outdoor furniture, perfect for relaxing after a day at the beach or exploring the city."
+    },
+    "location": {
+      "title": "Location",
+      "description": "Located in La Patacona, just one street from the beach and 15 minutes from Valencia city center by direct bus. Enjoy nearby restaurants, bars and activities."
+    },
+    "beach": {
+      "title": "Beach",
+      "description": "Very close to La Patacona beach, known for its fine sand and calm waters. Perfect for families and water activities."
+    },
+    "pool": {
+      "title": "Pool",
+      "description": "Large pool and kids pool with lifeguard, perfect for a refreshing swim. Kids playground and grassy relaxation area."
+    },
+    "padel": {
+      "title": "Padel",
+      "description": "Padel courts available for guests. Enjoy a match in a pleasant and sporty environment."
+    },
+    "kids": {
+      "title": "Kids",
+      "description": "Private kids playground within the complex, ideal for little ones to have fun in a safe environment."
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "description": "Free high-speed Wi-Fi connection throughout the apartment, perfect for working or enjoying online content."
+    },
+    "parking": {
+      "title": "Parking",
+      "description": "Private garage parking included, with direct access to the apartment."
+    },
     "title": "Highlights",
     "items": {
       "seaAccess": "Beach access",
@@ -48,5 +80,9 @@
     "bookNow": "Book now",
     "airbnb": "Book on Airbnb",
     "booking": "Book on Booking.com"
+  },
+  "testimonials": {
+    "title": "Guest reviews",
+    "placeholder": "This listing has 20 reviews on Airbnb and an average rating of 4.95"
   }
 }

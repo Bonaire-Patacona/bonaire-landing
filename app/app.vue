@@ -1,4 +1,7 @@
 <script setup>
+import darkLogo from 'assets/images/bonaire-patacona-logo-allargat-dark.svg'
+import lightLogo from 'assets/images/bonaire-patacona-logo-allargat.svg'
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -30,23 +33,26 @@ useSeoMeta({
     <UHeader>
       <template #left>
         <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0" />
+          <img
+            :src="$colorMode.value === 'dark' ? darkLogo : lightLogo"
+            alt="Bonaire Patacona Logo"
+            class="h-8 w-auto"
+          >
         </NuxtLink>
-
-        <LanguageSwitcher />
       </template>
 
       <template #right>
-        <UColorModeButton />
-
         <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
+          to="#cta"
+          size="md"
+          color="primary"
+          variant="solid"
+          class="ml-4"
+        >
+          {{ $t('cta.bookNow') }}
+        </UButton>
+        <UColorModeButton />
+        <LanguageSwitcher />
       </template>
     </UHeader>
 
@@ -54,24 +60,24 @@ useSeoMeta({
       <NuxtPage />
     </UMain>
 
-    <USeparator icon="i-simple-icons-nuxtdotjs" />
+    <USeparator icon="fa6-brands:airbnb" />
 
     <UFooter>
       <template #left>
         <p class="text-sm text-muted">
-          Built with Nuxt UI • © {{ new Date().getFullYear() }}
+          Bonaire Patacona © {{ new Date().getFullYear() }}
         </p>
       </template>
 
       <template #right>
-        <UButton
+        <!-- <UButton
           to="https://github.com/nuxt-ui-templates/starter"
           target="_blank"
           icon="i-simple-icons-github"
           aria-label="GitHub"
           color="neutral"
           variant="ghost"
-        />
+        /> -->
       </template>
     </UFooter>
   </UApp>
