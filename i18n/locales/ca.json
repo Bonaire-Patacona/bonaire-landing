@@ -1,0 +1,52 @@
+{
+  "site": {
+    "title": "Apartament Bonaire Patacona",
+    "subtitle": "Platja · Piscina · Wi-Fi · Terrassa · A/C · Aparcament"
+  },
+  "hero": {
+    "title": "Apartament a La Patacona — terrassa i a pocs passos de la platja",
+    "desc": "Descobreix la màgia de la Patacona en aquest acollidor apartament en un complex turístic. Ideal per a parelles i famílies, amb terrassa, Wi-Fi d'alta velocitat i cuina equipada.",
+    "book": "Comprovar disponibilitat"
+  },
+  "features": {
+    "title": "Què ofereix",
+    "items": {
+      "seaAccess": "Accés a la platja",
+      "wifi": "Wi-Fi d'alta velocitat",
+      "terrace": "Terrassa amb mobles d'exterior",
+      "ac": "Aire condicionat",
+      "parking": "Aparcament gratuït al carrer",
+      "pool": "Piscina amb socorrista",
+      "padel": "Pistes de pàdel",
+      "kids": "Parc infantil privat",
+      "kitchen": "Cuina equipada (Nespresso, forn, rentavaixelles)"
+    }
+  },
+  "about": {
+    "title": "Informació sobre l'espai",
+    "desc": "Apartament acollidor i lluminós amb orientació sud. Dues habitacions (1 llit doble + 2 llits individuals), bany complet amb banyera i hidromassatge, saló amb TV i Chromecast i cuina totalment equipada. Terrassa amb butaques. Ideal per a una escapada al mar o vacances en família."
+  },
+  "common": {
+    "location": "A 1 carrer de la platja. 15 min del centre de València amb autobús directe.",
+    "registry": "Dades del registre: ESFCTU000046060000646563000000000000000000VT-54340-V2",
+    "poolSeason": "Piscina amb socorrista: juny–setembre 10:30-15:30 i 16:30-22:00 (altres dates consulteu).",
+    "checkLaw": "Segons Reial decret 933/2021, es sol·licitaran dades personals de tots els hostes en el moment del check-in."
+  },
+  "gallery": {
+    "title": "Galeria"
+  },
+  "reviews": {
+    "title": "Ressenyes",
+    "placeholder": "Aquest allotjament té 20 ressenyes i una puntuació mitjana de 4,95."
+  },
+  "footer": {
+    "contact": "Contacta amb l'amfitrió",
+    "copy": "© {year} Bonaire Apartment"
+  },
+  "cta": {
+    "title": "Comprova la disponibilitat i reserva ara!",
+    "bookNow": "Reserva ara",
+    "airbnb": "Reserva a Airbnb",
+    "booking": "Reserva a Booking.com"
+  }
+}

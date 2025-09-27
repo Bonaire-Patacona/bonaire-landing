@@ -1,9 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui'
-  ],
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxtjs/i18n'],
 
   devtools: {
     enabled: true
@@ -24,5 +21,15 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', name: 'English' },
+      { code: 'es', iso: 'es-ES', name: 'Español' },
+      { code: 'ca', iso: 'ca-ES', name: 'Català' }
+    ],
+    defaultLocale: 'es',
+    vueI18n: './locales/index.ts' // use a small i18n loader file
   }
 })

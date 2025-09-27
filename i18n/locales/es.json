@@ -1,0 +1,52 @@
+{
+  "site": {
+    "title": "Apartamento Bonaire Patacona",
+    "subtitle": "Playa · Piscina · Wi-Fi · Terraza · A/C · Aparcamiento"
+  },
+  "hero": {
+    "title": "Apartamento en La Patacona — terraza y a pasos de la playa",
+    "desc": "Descubre este acogedor apartamento en un complejo familiar. Perfecto para parejas y familias pequeñas: terraza, Wi-Fi de alta velocidad y cocina completamente equipada.",
+    "book": "Comprobar disponibilidad"
+  },
+  "features": {
+    "title": "Qué ofrece",
+    "items": {
+      "seaAccess": "Acceso a la playa",
+      "wifi": "Wi-Fi de alta velocidad",
+      "terrace": "Terraza con muebles de exterior",
+      "ac": "Aire acondicionado",
+      "parking": "Aparcamiento gratuito en la calle",
+      "pool": "Piscina con socorrista (temporal)",
+      "padel": "Pistas de pádel",
+      "kids": "Zona infantil privada",
+      "kitchen": "Cocina equipada (Nespresso, horno, lavavajillas)"
+    }
+  },
+  "about": {
+    "title": "Información sobre el espacio",
+    "desc": "Apartamento soleado orientado al sur con dos dormitorios (1 doble + 2 camas individuales), baño completo con bañera y columna de hidromasaje, salón con TV y Chromecast, y cocina totalmente equipada. Terraza con sillones. Cerca de la playa y restaurantes locales."
+  },
+  "common": {
+    "location": "A una calle de la playa. 15 min al centro de Valencia en autobús directo.",
+    "registry": "Datos del registro: ESFCTU000046060000646563000000000000000000VT-54340-V2",
+    "poolSeason": "Piscina con socorrista: junio–septiembre 10:30–15:30 y 16:30–22:00 (otras fechas consultar).",
+    "checkLaw": "De acuerdo con el RD 933/2021, se solicitarán datos personales de todos los huéspedes en el momento del check-in."
+  },
+  "gallery": {
+    "title": "Galería"
+  },
+  "reviews": {
+    "title": "Reseñas",
+    "placeholder": "Este alojamiento tiene 20 reseñas y una puntuación media de 4,95."
+  },
+  "footer": {
+    "contact": "Contactar al anfitrión",
+    "copy": "© {year} Apartamento Bonaire"
+  },
+  "cta": {
+    "title": "¡Comprueba la disponibilidad y reserva ahora!",
+    "bookNow": "Reserva ahora",
+    "airbnb": "Reserva en Airbnb",
+    "booking": "Reserva en Booking.com"
+  }
+}

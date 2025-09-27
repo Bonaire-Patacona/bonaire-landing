@@ -1,74 +1,85 @@
 <template>
   <div>
     <UPageHero
-      title="Nuxt Starter Template"
-      description="A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours."
+      :title="$t('site.title')"
+      :description="$t('site.subtitle')"
+      :image="{ src: '@/assets/images/collage.jpeg', alt: 'Bonaire Patacona' }"
       :links="[{
-        label: 'Get started',
-        to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-        target: '_blank',
+        label: $t('cta.bookNow'),
+        to: '#cta',
         trailingIcon: 'i-lucide-arrow-right',
         size: 'xl'
-      }, {
-        label: 'Use this template',
-        to: 'https://github.com/nuxt-ui-templates/starter',
-        target: '_blank',
-        icon: 'i-simple-icons-github',
-        size: 'xl',
-        color: 'neutral',
-        variant: 'subtle'
       }]"
     />
 
+    <!-- Carousel Section -->
+    <UPageSection class="pt-0">
+      <UCarousel
+        :images="[
+          { src: '/assets/images/living-room.jpg', alt: 'Living room' },
+          { src: '/assets/images/main-bedroom.jpg', alt: 'Main Bedroom' },
+          { src: '/assets/images/twin-bedroom.jpg', alt: 'Twin-bed bedroom' },
+          { src: '/assets/images/pool.jpg', alt: 'Pool' },
+          { src: '/assets/images/beach-night.jpg', alt: 'Beach' },
+          { src: '/assets/images/kitchen.jpg', alt: 'Kitchen' },
+          { src: '/assets/images/bathroom.jpg', alt: 'Bathroom' }
+        ]"
+        :height="400"
+        :options="{ loop: true, autoplay: true, autoplayTimeout: 5000 }"
+      />
+    </UPageSection>
+
+    <!-- Features Section -->
+
     <UPageSection
       id="features"
-      title="Everything you need to build modern Nuxt apps"
-      description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
+      :title="$t('hero.title')"
+      :description="$t('hero.description')"
       :features="[{
-        icon: 'i-lucide-rocket',
-        title: 'Production-ready from day one',
-        description: 'Pre-configured with TypeScript, ESLint, Tailwind CSS, and all the best practices. Focus on building features, not setting up tooling.'
+        title: $t('features.location.title'),
+        description: $t('features.location.description'),
+        icon: 'i-lucide-map-pin'
       }, {
-        icon: 'i-lucide-palette',
-        title: 'Beautiful by default',
-        description: 'Leveraging Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
+        title: $t('features.beach.title'),
+        description: $t('features.beach.description'),
+        icon: 'i-lucide-beach'
       }, {
-        icon: 'i-lucide-zap',
-        title: 'Lightning fast',
-        description: 'Optimized for performance with SSR/SSG support, automatic code splitting, and edge-ready deployment. Your users will love the speed.'
+        title: $t('features.pool.title'),
+        description: $t('features.pool.description'),
+        icon: 'i-lucide-swimming-pool'
       }, {
-        icon: 'i-lucide-blocks',
-        title: '100+ components included',
-        description: 'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
+        title: $t('features.wifi.title'),
+        description: $t('features.wifi.description'),
+        icon: 'i-lucide-wifi'
       }, {
-        icon: 'i-lucide-code-2',
-        title: 'Developer experience first',
-        description: 'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
+        title: $t('features.terrace.title'),
+        description: $t('features.terrace.description'),
+        icon: 'i-lucide-sun'
       }, {
-        icon: 'i-lucide-shield-check',
-        title: 'Built for scale',
-        description: 'Enterprise-ready architecture with proper error handling, SEO optimization, and security best practices built-in.'
+        title: $t('features.parking.title'),
+        description: $t('features.parking.description'),
+        icon: 'i-lucide-car'
       }]"
     />
 
     <UPageSection>
       <UPageCTA
-        title="Ready to build your next Nuxt app?"
-        description="Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today."
+        id="cta"
+        :title="$t('cta.title')"
+        description=""
         variant="subtle"
         :links="[{
-          label: 'Start building',
-          to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+          label: $t('cta.airbnb'),
+          to: 'https://airbnb.es/h/bonaire-patacona',
           target: '_blank',
           trailingIcon: 'i-lucide-arrow-right',
-          color: 'neutral'
+          color: 'primary'
         }, {
-          label: 'View on GitHub',
-          to: 'https://github.com/nuxt-ui-templates/starter',
+          label: $t('cta.booking'),
+          to: 'https://www.booking.com/hotel/es/patacona-playa-piscina-wifi-terraza-bonaire.es.html?aid=356980&label=gog235jc-10CAsoRkIrcGF0YWNvbmEtcGxheWEtcGlzY2luYS13aWZpLXRlcnJhemEtYm9uYWlyZUgEWANoRogBAZgBM7gBB8gBDdgBA-gBAfgBAYgCAagCAbgC26DfxgbAAgHSAiQzMTFlMDI5Yi1iM2ZjLTRlMTgtYmU4My1lZTZkOTc3NGJkNjHYAgHgAgE&sid=21d5e448f7e4a52f547b06916a18b02e&dist=0&keep_landing=1&sb_price_type=total&type=total&',
           target: '_blank',
-          icon: 'i-simple-icons-github',
-          color: 'neutral',
-          variant: 'outline'
+          trailingIcon: 'i-lucide-arrow-right',
+          color: 'secondary'
         }]"
       />
     </UPageSection>

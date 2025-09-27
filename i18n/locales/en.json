@@ -1,0 +1,52 @@
+{
+  "site": {
+    "title": "Bonaire Patacona Apartment",
+    "subtitle": "Beach · Pool · Wi-Fi · Terrace · A/C · Parking"
+  },
+  "hero": {
+    "title": "Seaside apartment at La Patacona — terrace & steps to the beach",
+    "desc": "Enjoy this cozy apartment in a family-friendly complex. Perfect for couples and small families — terrace, high-speed Wi-Fi and a fully equipped kitchen.",
+    "book": "Check availability"
+  },
+  "features": {
+    "title": "Highlights",
+    "items": {
+      "seaAccess": "Beach access",
+      "wifi": "High-speed Wi-Fi",
+      "terrace": "Terrace with outdoor furniture",
+      "ac": "Air conditioning",
+      "parking": "Free street parking",
+      "pool": "Pool with lifeguard (seasonal)",
+      "padel": "Padel courts",
+      "kids": "Private kids playground",
+      "kitchen": "Fully equipped kitchen (Nespresso, oven, dishwasher)"
+    }
+  },
+  "about": {
+    "title": "About this space",
+    "desc": "Sunny south-facing apartment with two bedrooms (1 double + 2 single beds), one full bathroom with bathtub and hydro column, living room with TV and Chromecast, and fully equipped kitchen. Terrace with seating. Close to beach and local restaurants."
+  },
+  "common": {
+    "location": "One street from the beach. 15 min to Valencia city center by direct bus.",
+    "registry": "Registration: ESFCTU000046060000646563000000000000000000VT-54340-V2",
+    "poolSeason": "Pool with lifeguard: June–September 10:30–15:30 & 16:30–22:00 (other dates on request).",
+    "checkLaw": "By Spanish law (Real Decreto 933/2021) personal data for all guests is requested at check-in."
+  },
+  "gallery": {
+    "title": "Gallery"
+  },
+  "reviews": {
+    "title": "Guest reviews",
+    "placeholder": "This listing has 20 reviews and an average rating of 4.95."
+  },
+  "footer": {
+    "contact": "Contact host",
+    "copy": "© {year} Bonaire Apartment"
+  },
+  "cta": {
+    "title": "Check availability and book now!",
+    "bookNow": "Book now",
+    "airbnb": "Book on Airbnb",
+    "booking": "Book on Booking.com"
+  }
+}
