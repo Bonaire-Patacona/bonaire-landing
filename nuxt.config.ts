@@ -28,6 +28,10 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-01-15',
 
+  nitro: {
+    preset: 'static'
+  },
+
   eslint: {
     config: {
       stylistic: {
@@ -38,6 +42,7 @@ export default defineNuxtConfig({
   },
 
   i18n: {
+    strategy: 'prefix',
     locales: [
       { code: 'en', iso: 'en-US', name: 'English' },
       { code: 'es', iso: 'es-ES', name: 'Español' },
