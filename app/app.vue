@@ -1,7 +1,4 @@
 <script setup>
-import darkLogo from 'assets/images/bonaire-patacona-logo-allargat-dark.svg'
-import lightLogo from 'assets/images/bonaire-patacona-logo-allargat.svg'
-
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -33,11 +30,7 @@ useSeoMeta({
     <UHeader>
       <template #left>
         <NuxtLink to="/">
-          <img
-            :src="$colorMode.value === 'dark' ? darkLogo : lightLogo"
-            alt="Bonaire Patacona Logo"
-            class="h-8 w-auto"
-          >
+          <AppLogo class="w-auto h-6 shrink-0" />
         </NuxtLink>
       </template>
 
