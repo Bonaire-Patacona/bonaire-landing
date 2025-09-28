@@ -109,6 +109,13 @@
     >
       <TestimonialsComponent />
     </UPageSection>
+
+    <!-- Big logo at the bottom right -->
+    <UPageSection :ui="{ container: 'py-4 px-4 flex justify-end' }">
+      <NuxtLink to="/">
+        <AppLogo class="w-auto h-16 shrink-0" />
+      </NuxtLink>
+    </UPageSection>
   </div>
 </template>
 
