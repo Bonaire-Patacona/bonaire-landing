@@ -1,4 +1,6 @@
 <script setup>
+import mainImage from "assets/images/collage.jpg"
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -19,8 +21,8 @@ useSeoMeta({
   description,
   ogTitle: title,
   ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
+  ogImage: mainImage,
+  twitterImage: mainImage,
   twitterCard: 'summary_large_image'
 })
 </script>
