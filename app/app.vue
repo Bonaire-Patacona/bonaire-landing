@@ -11,8 +11,8 @@ useHead({
   }
 })
 
-const title = 'Nuxt Starter Template'
-const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
+const title = 'Bonaire Patacona Apartment'
+const description = 'Beach, pool, A/C, padel, terrace, parking. Patacona beach, Valencia, Spain'
 
 useSeoMeta({
   title,
