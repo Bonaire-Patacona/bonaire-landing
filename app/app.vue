@@ -1,5 +1,5 @@
 <script setup>
-import mainImage from "assets/images/collage.jpg"
+import mainImage from 'assets/images/collage.jpg'
 
 useHead({
   meta: [
