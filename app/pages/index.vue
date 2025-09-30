@@ -95,7 +95,7 @@
           color: 'airbnb'
         }, {
           label: $t('cta.booking'),
-          to: 'https://www.booking.com/hotel/es/patacona-playa-piscina-wifi-terraza-bonaire.es.html?aid=356980&label=gog235jc-10CAsoRkIrcGF0YWNvbmEtcGxheWEtcGlzY2luYS13aWZpLXRlcnJhemEtYm9uYWlyZUgEWANoRogBAZgBM7gBB8gBDdgBA-gBAfgBAYgCAagCAbgC26DfxgbAAgHSAiQzMTFlMDI5Yi1iM2ZjLTRlMTgtYmU4My1lZTZkOTc3NGJkNjHYAgHgAgE&sid=21d5e448f7e4a52f547b06916a18b02e&dist=0&keep_landing=1&sb_price_type=total&type=total&',
+          to: 'https://www.booking.com/Share-b9tE4r',
           target: '_blank',
           trailingIcon: 'fa-brands:bootstrap',
           color: 'secondary'
