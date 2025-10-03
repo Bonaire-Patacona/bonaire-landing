@@ -10,17 +10,17 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  # expose secrets here (set them in Repo → Settings → Secrets → Actions)
+  CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}        # example.com (required if you want CNAME auto)
+  CUSTOM_DOMAIN_URL: ${{ secrets.CUSTOM_DOMAIN_URL }} # optional, e.g. https://example.com
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
     concurrency:
       group: "nuxt-pages-deploy"
       cancel-in-progress: true
-
-    # Expose secrets as env so podem usar env.<name> en les condicions if
-    env:
-      CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
-      CUSTOM_DOMAIN_URL: ${{ secrets.CUSTOM_DOMAIN_URL }}
 
     steps:
       - name: Checkout repository
@@ -43,13 +43,13 @@ jobs:
         run: npm ci
 
       - name: Build - generate static site
-        # Assignem NUXT_PUBLIC_SITE_URL amb un fallback a https://$CUSTOM_DOMAIN
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          # set NUXT_PUBLIC_SITE_URL from secret if provided, fallback later in script if only CUSTOM_DOMAIN present
           NUXT_PUBLIC_SITE_URL: ${{ env.CUSTOM_DOMAIN_URL }}
           CUSTOM_DOMAIN: ${{ env.CUSTOM_DOMAIN }}
         run: |
-          # fallback: si no hi ha CUSTOM_DOMAIN_URL, usem https://$CUSTOM_DOMAIN
+          # fallback to https://$CUSTOM_DOMAIN if CUSTOM_DOMAIN_URL not set but CUSTOM_DOMAIN is set
           if [ -z "$NUXT_PUBLIC_SITE_URL" ] && [ -n "$CUSTOM_DOMAIN" ]; then
             export NUXT_PUBLIC_SITE_URL="https://$CUSTOM_DOMAIN"
             echo "Set NUXT_PUBLIC_SITE_URL to $NUXT_PUBLIC_SITE_URL"
@@ -57,12 +57,12 @@ jobs:
             echo "NUXT_PUBLIC_SITE_URL is $NUXT_PUBLIC_SITE_URL"
           fi
 
-          # run generate
+          # generate static site (Nuxt 4)
           npx nuxi generate --no-exit-on-error
 
       - name: Verify output
         run: |
-          echo "Output folder size:"
+          echo "Output folder summary:"
           du -sh .output/public || true
           ls -la .output/public | sed -n '1,200p' || true
 
@@ -70,9 +70,9 @@ jobs:
         if: env.CUSTOM_DOMAIN != ''
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > .output/public/CNAME
-          echo "CNAME created for: ${{ env.CUSTOM_DOMAIN }}"
+          echo "Created CNAME for: ${{ env.CUSTOM_DOMAIN }}"
 
-      - name: Upload pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v1
         with:
           path: .output/public
