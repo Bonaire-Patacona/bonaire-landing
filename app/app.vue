@@ -32,7 +32,7 @@ useSeoMeta({
     <UHeader>
       <template #left>
         <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0" />
+          <AppLogo class="w-auto h-14 shrink-0 p-1" />
         </NuxtLink>
       </template>
 
