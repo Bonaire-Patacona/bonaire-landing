@@ -63,9 +63,9 @@ jobs:
           path: |
             .output
             node_modules
-          key: ${{ runner.os }}-nuxt3-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock') }}
+          key: ${{ runner.os }}-nuxt4-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-nuxt3-
+            ${{ runner.os }}-nuxt4-
 
       - name: Install dependencies
         run: |
@@ -77,9 +77,9 @@ jobs:
             npm ci
           fi
 
-      - name: Generate static site (Nuxt 3)
+      - name: Generate static site (Nuxt 4)
         run: |
-          # Use npx nuxi generate to ensure Nuxt3 generate runs even if no script.
+          # Use npx nuxi generate to ensure Nuxt4 generate runs even if no script.
           npx nuxi generate
 
       - name: Upload artifact
