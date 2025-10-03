@@ -1,7 +1,7 @@
 <template>
   <div>
     <UPageHero
-      :class="[$colorMode.value === 'dark' ? 'hero-home dark' : 'hero-home']"
+      :class="[$colorMode?.value === 'dark' ? 'hero-home dark' : 'hero-home']"
       :title="$t('site.title')"
       :description="$t('site.subtitle')"
       orientation="horizontal"
