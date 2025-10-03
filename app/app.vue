@@ -64,8 +64,16 @@ useSeoMeta({
         </p>
       </template>
 
-      <!-- <template #right>
-      </template> -->
+      <template #right>
+        <span
+          class=" i-lucide:moon shrink-0 size-5"
+          aria-hidden="true"
+        />
+        <span
+          class=" i-lucide:sun shrink-0 size-5"
+          aria-hidden="true"
+        />
+      </template>
     </UFooter>
   </UApp>
 </template>
