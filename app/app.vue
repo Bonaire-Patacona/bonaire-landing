@@ -65,14 +65,7 @@ useSeoMeta({
       </template>
 
       <template #right>
-        <span
-          class=" i-lucide:moon shrink-0 size-5"
-          aria-hidden="true"
-        />
-        <span
-          class=" i-lucide:sun shrink-0 size-5"
-          aria-hidden="true"
-        />
+        <LanguageSwitcher />
       </template>
     </UFooter>
   </UApp>
