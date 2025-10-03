@@ -1,26 +1,21 @@
-name: Build & Deploy Nuxt (Static) to GitHub Pages (root domain)
+name: Deploy Nuxt 4 to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - main   # canvia si la teva branca principal és una altra
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 env:
-  # expose secrets here (set them in Repo → Settings → Secrets → Actions)
-  CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}        # example.com (required if you want CNAME auto)
-  CUSTOM_DOMAIN_URL: ${{ secrets.CUSTOM_DOMAIN_URL }} # optional, e.g. https://example.com
+  #Expose the secret(s) as environment variables for the job so you can use them in "if" conditions.
+  CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}        # optional: example.com
+  CUSTOM_DOMAIN_URL: ${{ secrets.CUSTOM_DOMAIN_URL }} # optional: https://example.com
 
 jobs:
-  build-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    concurrency:
-      group: "nuxt-pages-deploy"
-      cancel-in-progress: true
 
     steps:
       - name: Checkout repository
@@ -28,28 +23,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: 22
+          cache: npm
 
       - name: Show node/npm versions (debug)
         run: |
           node -v
           npm -v
+          uname -a
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build - generate static site
+      - name: Generate static site
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          # set NUXT_PUBLIC_SITE_URL from secret if provided, fallback later in script if only CUSTOM_DOMAIN present
+          # allow step-level env fallback; we already exposed CUSTOM_DOMAIN_URL and CUSTOM_DOMAIN at job env
           NUXT_PUBLIC_SITE_URL: ${{ env.CUSTOM_DOMAIN_URL }}
           CUSTOM_DOMAIN: ${{ env.CUSTOM_DOMAIN }}
         run: |
-          # fallback to https://$CUSTOM_DOMAIN if CUSTOM_DOMAIN_URL not set but CUSTOM_DOMAIN is set
+          # Fallback to https://$CUSTOM_DOMAIN if CUSTOM_DOMAIN_URL not provided
           if [ -z "$NUXT_PUBLIC_SITE_URL" ] && [ -n "$CUSTOM_DOMAIN" ]; then
             export NUXT_PUBLIC_SITE_URL="https://$CUSTOM_DOMAIN"
             echo "Set NUXT_PUBLIC_SITE_URL to $NUXT_PUBLIC_SITE_URL"
@@ -57,29 +53,26 @@ jobs:
             echo "NUXT_PUBLIC_SITE_URL is $NUXT_PUBLIC_SITE_URL"
           fi
 
-          # generate static site (Nuxt 4)
           npx nuxi generate --no-exit-on-error
 
       - name: Verify output
         run: |
-          echo "Output folder summary:"
+          echo "Output summary:"
           du -sh .output/public || true
           ls -la .output/public | sed -n '1,200p' || true
 
-      - name: Create CNAME (custom domain)
+      - name: Create CNAME for custom domain (optional)
+        # Use env.CUSTOM_DOMAIN here — do NOT use secrets.CUSTOM_DOMAIN in 'if'
         if: env.CUSTOM_DOMAIN != ''
         run: |
           echo "${{ env.CUSTOM_DOMAIN }}" > .output/public/CNAME
-          echo "Created CNAME for: ${{ env.CUSTOM_DOMAIN }}"
+          echo "Created CNAME: ${{ env.CUSTOM_DOMAIN }}"
+          cat .output/public/CNAME
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: .output/public
-
-  deploy:
-    needs: build-deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .output/public
+          publish_branch: gh-pages
+          commit_message: "ci: deploy Nuxt site to gh-pages"
