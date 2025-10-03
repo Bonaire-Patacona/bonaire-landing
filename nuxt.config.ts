@@ -42,7 +42,7 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    strategy: 'prefix_and_default',
+    strategy: 'prefix_except_default',
     locales: [
       { code: 'en', iso: 'en-US', name: 'English' },
       { code: 'es', iso: 'es-ES', name: 'Español' },
