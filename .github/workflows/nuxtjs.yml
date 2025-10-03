@@ -1,99 +1,85 @@
-name: Deploy Nuxt 4 site to Pages
+name: Build & Deploy Nuxt (Static) to GitHub Pages (root domain)
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches:
+      - main
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
-    outputs:
-      publish_dir: .output/public
+    concurrency:
+      group: "nuxt-pages-deploy"
+      cancel-in-progress: true
+
+    # Expose secrets as env so podem usar env.<name> en les condicions if
+    env:
+      CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+      CUSTOM_DOMAIN_URL: ${{ secrets.CUSTOM_DOMAIN_URL }}
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Detect package manager
-        id: detect-package-manager
-        run: |
-          if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
-            echo "manager=pnpm" >> $GITHUB_OUTPUT
-            echo "install_cmd=install" >> $GITHUB_OUTPUT
-            echo "generate_cmd=generate" >> $GITHUB_OUTPUT
-            exit 0
-          elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
-            echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "install_cmd=install" >> $GITHUB_OUTPUT
-            echo "generate_cmd=generate" >> $GITHUB_OUTPUT
-            exit 0
-          elif [ -f "${{ github.workspace }}/package-lock.json" ] || [ -f "${{ github.workspace }}/package.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "install_cmd=ci" >> $GITHUB_OUTPUT
-            echo "generate_cmd=generate" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "Unable to determine package manager"
-            exit 1
-          fi
-
-      - name: Setup Node
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          node-version: "22"
+          cache: "npm"
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          static_site_generator: nuxt
-
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .output
-            node_modules
-          key: ${{ runner.os }}-nuxt4-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-nuxt4-
+      - name: Show node/npm versions (debug)
+        run: |
+          node -v
+          npm -v
 
       - name: Install dependencies
+        run: npm ci
+
+      - name: Build - generate static site
+        # Assignem NUXT_PUBLIC_SITE_URL amb un fallback a https://$CUSTOM_DOMAIN
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          NUXT_PUBLIC_SITE_URL: ${{ env.CUSTOM_DOMAIN_URL }}
+          CUSTOM_DOMAIN: ${{ env.CUSTOM_DOMAIN }}
         run: |
-          if [ "${{ steps.detect-package-manager.outputs.manager }}" = "pnpm" ]; then
-            pnpm install
-          elif [ "${{ steps.detect-package-manager.outputs.manager }}" = "yarn" ]; then
-            yarn install
+          # fallback: si no hi ha CUSTOM_DOMAIN_URL, usem https://$CUSTOM_DOMAIN
+          if [ -z "$NUXT_PUBLIC_SITE_URL" ] && [ -n "$CUSTOM_DOMAIN" ]; then
+            export NUXT_PUBLIC_SITE_URL="https://$CUSTOM_DOMAIN"
+            echo "Set NUXT_PUBLIC_SITE_URL to $NUXT_PUBLIC_SITE_URL"
           else
-            npm ci
+            echo "NUXT_PUBLIC_SITE_URL is $NUXT_PUBLIC_SITE_URL"
           fi
 
-      - name: Generate static site (Nuxt 4)
-        run: |
-          # Use npx nuxi generate to ensure Nuxt4 generate runs even if no script.
-          npx nuxi generate
+          # run generate
+          npx nuxi generate --no-exit-on-error
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Verify output
+        run: |
+          echo "Output folder size:"
+          du -sh .output/public || true
+          ls -la .output/public | sed -n '1,200p' || true
+
+      - name: Create CNAME (custom domain)
+        if: env.CUSTOM_DOMAIN != ''
+        run: |
+          echo "${{ env.CUSTOM_DOMAIN }}" > .output/public/CNAME
+          echo "CNAME created for: ${{ env.CUSTOM_DOMAIN }}"
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          path: ./.output/public
+          path: .output/public
 
   deploy:
-    needs: build
+    needs: build-deploy
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v1
