@@ -30,12 +30,12 @@ useSeoMeta({
 const items = computed(() => [{
   label: $t('menu.home'),
   icon: 'fa6-solid:house',
-  to: '/'
+  to: localePath('/')
 },
 {
   label: $t('menu.guia'),
   icon: 'fa6-solid:book',
-  to: '/guia'
+  to: localePath('/guia')
 }])
 
 const { locale } = useI18n()
