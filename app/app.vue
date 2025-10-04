@@ -27,7 +27,12 @@ useSeoMeta({
 })
 
 const items = computed(() => [{
-  label: $t('guia.title'),
+  label: $t('menu.home'),
+  icon: 'fa6-solid:house',
+  to: '/'
+},
+{
+  label: $t('menu.guia'),
   icon: 'fa6-solid:book',
   to: '/guia'
 }])

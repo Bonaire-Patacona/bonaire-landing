@@ -1,4 +1,11 @@
 {
+  "menu": {
+    "home": "Home",
+    "guia": "Guide",
+    "gallery": "Gallery",
+    "reviews": "Reviews",
+    "contact": "Contact"
+  },
   "site": {
     "title": "Bonaire Patacona Apartment",
     "subtitle": "Beach · Pool · Wi-Fi · Terrace · A/C · Parking"

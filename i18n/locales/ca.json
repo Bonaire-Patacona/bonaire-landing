@@ -1,4 +1,11 @@
 {
+  "menu": {
+    "home": "Inici",
+    "guia": "Guia",
+    "gallery": "Galeria",
+    "reviews": "Ressenyes",
+    "contact": "Contacte"
+  },
   "site": {
     "title": "Apartament Bonaire Patacona",
     "subtitle": "Platja · Piscina · Wi-Fi · Terrassa · A/C · Aparcament"

@@ -1,4 +1,11 @@
 {
+  "menu": {
+    "home": "Inicio",
+    "guia": "Guía",
+    "gallery": "Galería",
+    "reviews": "Reseñas",
+    "contact": "Contacto"
+  },
   "site": {
     "title": "Apartamento Bonaire Patacona",
     "subtitle": "Playa · Piscina · Wi-Fi · Terraza · A/C · Aparcamiento"
