@@ -8,6 +8,11 @@
     "description": "Enjoy this cozy apartment in a family-friendly complex. Perfect for couples and small families — terrace, high-speed Wi-Fi and a fully equipped kitchen.",
     "book": "Check availability"
   },
+  "guia": {
+    "title": "La Patacona Guide",
+    "description": "Discover the highlights of La Patacona in our guide published on Airbnb",
+    "airbnb": "View the guide"
+  },
   "features": {
     "terrace": {
       "title": "Terrace",

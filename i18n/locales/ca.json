@@ -8,6 +8,11 @@
     "description": "Descobreix la màgia de la Patacona en aquest acollidor apartament en un complex turístic. Ideal per a parelles i famílies, amb terrassa, Wi-Fi d'alta velocitat i cuina equipada.",
     "book": "Comprovar disponibilitat"
   },
+  "guia": {
+    "title": "Guia de La Patacona",
+    "description": "Descobreix els llocs d'interès de la Patacona a la nostra guia publicada a Airbnb",
+    "airbnb": "Veure la guia"
+  },
   "features": {
     "terrace": {
       "title": "Terrassa",

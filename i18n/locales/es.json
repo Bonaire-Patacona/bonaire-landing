@@ -8,6 +8,11 @@
     "description": "Descubre este acogedor apartamento en un complejo familiar. Perfecto para parejas y familias pequeñas: terraza, Wi-Fi de alta velocidad y cocina completamente equipada.",
     "book": "Comprobar disponibilidad"
   },
+  "guia": {
+    "title": "Guía de La Patacona",
+    "description": "Descubre los puntos destacados de La Patacona en nuestra guía publicada en Airbnb",
+    "airbnb": "Ver la guía"
+  },
   "features": {
     "terrace": {
       "title": "Terraza",

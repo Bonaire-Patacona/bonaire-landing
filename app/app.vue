@@ -25,6 +25,12 @@ useSeoMeta({
   twitterImage: mainImage,
   twitterCard: 'summary_large_image'
 })
+
+const items = computed(() => [{
+  label: $t('guia.title'),
+  icon: 'fa6-solid:book',
+  to: '/guia'
+}])
 </script>
 
 <template>
@@ -35,7 +41,7 @@ useSeoMeta({
           <AppLogo class="w-auto h-14 shrink-0 p-1" />
         </NuxtLink>
       </template>
-
+      <UNavigationMenu :items="items" />
       <template #right>
         <UButton
           to="#cta"
@@ -48,6 +54,13 @@ useSeoMeta({
         </UButton>
         <UColorModeButton />
         <LanguageSwitcher />
+      </template>
+      <template #body>
+        <UNavigationMenu
+          :items="items"
+          orientation="vertical"
+          class="-mx-2.5"
+        />
       </template>
     </UHeader>
 
