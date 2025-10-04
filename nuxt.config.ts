@@ -64,6 +64,11 @@ export default defineNuxtConfig({
       { code: 'ca', iso: 'ca-ES', name: 'Català' }
     ],
     defaultLocale: 'es',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root' // recommended
+    },
     vueI18n: './locales/index.ts' // use a small i18n loader file
   }
 })
