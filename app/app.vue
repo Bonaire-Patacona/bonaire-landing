@@ -36,10 +36,14 @@ const items = computed(() => [{
   icon: 'fa6-solid:book',
   to: '/guia'
 }])
+
+import * as locales from '@nuxt/ui/locale'
+
+const { locale } = useI18n()
 </script>
 
 <template>
-  <UApp>
+  <UApp :locale="locales[locale]>
     <UHeader>
       <template #left>
         <NuxtLink to="/">
