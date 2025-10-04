@@ -4,13 +4,13 @@
     :modal="false"
     :items="[{
       label: 'English',
-      to: '/en'
+      to: switchLocalePath('en')
     }, {
       label: 'Español',
-      to: '/'
+      to: switchLocalePath('es')
     }, {
       label: 'Català',
-      to: '/ca'
+      to: switchLocalePath('ca')
     }]"
     :content="{ align: 'start' }"
     :ui="{ content: 'min-w-fit' }"
@@ -29,3 +29,7 @@
     />
   </UDropdownMenu>
 </template>
+
+<script setup>
+const switchLocalePath = useSwitchLocalePath()
+</script>
