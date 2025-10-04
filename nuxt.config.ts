@@ -32,21 +32,6 @@ export default defineNuxtConfig({
     preset: 'static'
   },
 
-  vite: {
-    ssr: {
-      noExternal: [
-        '@iconify-json/lucide',
-        '@iconify-json/simple-icons'
-      ]
-    },
-    optimizeDeps: {
-      include: [
-        '@iconify-json/lucide',
-        '@iconify-json/simple-icons'
-      ]
-    }
-  },
-
   eslint: {
     config: {
       stylistic: {
