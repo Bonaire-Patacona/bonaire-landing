@@ -38,13 +38,11 @@ const items = computed(() => [{
   to: '/guia'
 }])
 
-
-
 const { locale } = useI18n()
 </script>
 
 <template>
-  <UApp :locale="locales[locale]>
+  <UApp :locale="locales[locale]">
     <UHeader>
       <template #left>
         <NuxtLink to="/">
