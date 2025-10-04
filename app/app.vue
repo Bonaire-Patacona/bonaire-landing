@@ -39,6 +39,7 @@ const items = computed(() => [{
 }])
 
 const { locale } = useI18n()
+const localePath = useLocalePath()
 </script>
 
 <template>
