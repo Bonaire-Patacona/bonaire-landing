@@ -1,5 +1,6 @@
 <script setup>
 import mainImage from 'assets/images/collage.jpg'
+import * as locales from '@nuxt/ui/locale'
 
 useHead({
   meta: [
@@ -37,7 +38,7 @@ const items = computed(() => [{
   to: '/guia'
 }])
 
-import * as locales from '@nuxt/ui/locale'
+
 
 const { locale } = useI18n()
 </script>
