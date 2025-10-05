@@ -112,7 +112,7 @@
 
     <!-- Big logo centered -->
     <UPageSection :ui="{ container: 'py-4 px-4 flex justify-center' }">
-      <NuxtLink to="/">
+      <NuxtLink :to="localePath('/')">
         <LogoSquare class="w-auto h-40 shrink-0" />
       </NuxtLink>
     </UPageSection>
@@ -155,6 +155,7 @@ const items = [
   beach2,
   beachNight
 ]
+const localePath = useLocalePath()
 </script>
 
 <style scoped>

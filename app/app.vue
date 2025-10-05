@@ -46,7 +46,7 @@ const localePath = useLocalePath()
   <UApp :locale="locales[locale]">
     <UHeader>
       <template #left>
-        <NuxtLink to="/">
+        <NuxtLink :to="localePath('/')">
           <AppLogo class="w-auto h-14 shrink-0 p-1" />
         </NuxtLink>
       </template>
