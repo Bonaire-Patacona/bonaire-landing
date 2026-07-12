@@ -38,13 +38,36 @@
         :items="items"
         :ui="{ item: 'basis-1/3' }"
       >
-        <img
-          :src="item"
-          width="350"
-          height="250"
-          class="rounded-lg"
+        <button
+          type="button"
+          class="gallery-image-button"
+          :aria-label="'Obrir imatge ampliada'"
+          @click="openImage(item)"
         >
+          <img
+            :src="item"
+            width="350"
+            height="250"
+            alt="Bonaire Patacona"
+            class="rounded-lg"
+          >
+        </button>
       </UCarousel>
+
+      <UModal
+        v-model:open="isImageModalOpen"
+        title="Imatge ampliada"
+        class="max-w-6xl"
+      >
+        <template #body>
+          <img
+            v-if="selectedImage"
+            :src="selectedImage"
+            alt="Bonaire Patacona ampliada"
+            class="max-h-[80vh] w-full rounded-lg object-contain"
+          >
+        </template>
+      </UModal>
     </UPageSection>
 
     <!-- Features Section -->
@@ -149,6 +172,15 @@ const items = [
   beach2,
   beachNight
 ]
+
+const selectedImage = ref(null)
+const isImageModalOpen = ref(false)
+
+function openImage(image) {
+  selectedImage.value = image
+  isImageModalOpen.value = true
+}
+
 const localePath = useLocalePath()
 </script>
 
@@ -161,5 +193,17 @@ const localePath = useLocalePath()
 
 .dark .hero-home {
   background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6)), url('/assets/images/beach-night.jpeg');
+}
+
+.gallery-image-button {
+  display: block;
+  width: 100%;
+  cursor: zoom-in;
+}
+
+.gallery-image-button:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
 }
 </style>
