@@ -1,0 +1,24 @@
+{
+  "menu": { "home": "Home", "guia": "Gids", "gallery": "Galerij", "reviews": "Beoordelingen", "contact": "Contact" },
+  "site": { "title": "Appartement Bonaire Patacona", "subtitle": "Strand · Zwembad · Wifi · Terras · Airconditioning · Parkeren" },
+  "hero": { "title": "Appartement in La Patacona — terras en op een steenworp van het strand", "description": "Ontdek dit gezellige appartement in een kindvriendelijk complex. Perfect voor stellen en kleine gezinnen: een terras, snelle wifi en een volledig uitgeruste keuken.", "book": "Beschikbaarheid bekijken" },
+  "guia": { "title": "Gids voor La Patacona", "description": "Ontdek de hoogtepunten van La Patacona in onze gids op Airbnb", "airbnb": "Bekijk de gids" },
+  "features": {
+    "terrace": { "title": "Terras", "description": "Terras op het zuiden met tuinmeubilair, perfect om te ontspannen na een dag op het strand of in de stad." },
+    "location": { "title": "Locatie", "description": "Gelegen in La Patacona, slechts één straat van het strand en 15 minuten van het centrum van Valencia met de rechtstreekse bus. Restaurants, bars en activiteiten zijn vlakbij." },
+    "beach": { "title": "Strand", "description": "Dicht bij het strand van La Patacona, bekend om zijn fijne zand en rustige water. Ideaal voor gezinnen en watersportactiviteiten." },
+    "pool": { "title": "Zwembad", "description": "Groot zwembad en kinderbad met badmeester, perfect voor een verfrissende duik. Er is ook een speeltuin en een grasveld om te ontspannen." },
+    "padel": { "title": "Padel", "description": "Padelbanen zijn beschikbaar voor gasten. Geniet van een wedstrijd in een aangename, sportieve omgeving." },
+    "kids": { "title": "Kinderen", "description": "Privéspeeltuin in het complex, ideaal zodat de kleintjes veilig kunnen spelen." },
+    "wifi": { "title": "Wifi", "description": "Gratis snelle wifi in het hele appartement, perfect om te werken of online content te bekijken." },
+    "parking": { "title": "Parkeren", "description": "Een parkeerplaats in een privégarage met directe toegang tot het appartement is inbegrepen." },
+    "title": "Voorzieningen", "items": { "seaAccess": "Toegang tot het strand", "wifi": "Snelle wifi", "terrace": "Terras met tuinmeubilair", "ac": "Airconditioning", "parking": "Gratis parkeren op straat", "pool": "Zwembad met badmeester (seizoensgebonden)", "padel": "Padelbanen", "kids": "Privéspeeltuin", "kitchen": "Volledig uitgeruste keuken (Nespresso, oven, vaatwasser)" }
+  },
+  "about": { "title": "Over deze accommodatie", "desc": "Licht appartement op het zuiden met twee slaapkamers (1 tweepersoonsbed + 2 eenpersoonsbedden), een complete badkamer met bad en hydromassagekolom, woonkamer met tv en Chromecast, en een volledig uitgeruste keuken. Terras met fauteuils. Dicht bij het strand en lokale restaurants." },
+  "common": { "location": "Eén straat van het strand. 15 min. naar het centrum van Valencia met de rechtstreekse bus.", "registry": "Registratiegegevens: ESFCTU000046060000646563000000000000000000VT-54340-V2", "poolSeason": "Zwembad met badmeester: juni–september 10:30–15:30 en 16:30–22:00 (andere data op aanvraag).", "checkLaw": "Volgens het Spaanse Koninklijk Besluit 933/2021 worden bij het inchecken de persoonsgegevens van alle gasten gevraagd." },
+  "gallery": { "title": "Galerij" },
+  "reviews": { "title": "Beoordelingen", "placeholder": "Deze accommodatie heeft 20 beoordelingen en een gemiddelde score van 4,95." },
+  "footer": { "contact": "Neem contact op met de host", "copy": "© {year} Appartement Bonaire" },
+  "cta": { "title": "Bekijk de beschikbaarheid en boek nu!", "bookNow": "Boek nu", "airbnb": "Boek op Airbnb", "booking": "Boek op Booking.com" },
+  "testimonials": { "title": "Beoordelingen van gasten", "placeholder": "Deze accommodatie heeft 20 beoordelingen op Airbnb en een gemiddelde score van 4,95" }
+}

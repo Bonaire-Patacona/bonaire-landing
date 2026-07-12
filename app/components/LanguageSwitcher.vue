@@ -11,6 +11,18 @@
     }, {
       label: 'Català',
       to: switchLocalePath('ca')
+    }, {
+      label: 'Français',
+      to: switchLocalePath('fr')
+    }, {
+      label: 'Deutsch',
+      to: switchLocalePath('de')
+    }, {
+      label: 'Italiano',
+      to: switchLocalePath('it')
+    }, {
+      label: 'Nederlands',
+      to: switchLocalePath('nl')
     }]"
     :content="{ align: 'start' }"
     :ui="{ content: 'min-w-fit' }"

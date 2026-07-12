@@ -1,0 +1,24 @@
+{
+  "menu": { "home": "Home", "guia": "Guida", "gallery": "Galleria", "reviews": "Recensioni", "contact": "Contatti" },
+  "site": { "title": "Appartamento Bonaire Patacona", "subtitle": "Spiaggia · Piscina · Wi-Fi · Terrazza · Aria condizionata · Parcheggio" },
+  "hero": { "title": "Appartamento a La Patacona — terrazza e a pochi passi dalla spiaggia", "description": "Scopri questo accogliente appartamento in un complesso adatto alle famiglie. Perfetto per coppie e piccole famiglie: terrazza, Wi-Fi ad alta velocità e cucina completamente attrezzata.", "book": "Verifica disponibilità" },
+  "guia": { "title": "Guida di La Patacona", "description": "Scopri i luoghi più interessanti di La Patacona nella nostra guida pubblicata su Airbnb", "airbnb": "Vedi la guida" },
+  "features": {
+    "terrace": { "title": "Terrazza", "description": "Terrazza esposta a sud con arredi da esterno, perfetta per rilassarsi dopo una giornata in spiaggia o alla scoperta della città." },
+    "location": { "title": "Posizione", "description": "Situato a La Patacona, a una sola strada dalla spiaggia e a 15 minuti dal centro di Valencia con autobus diretto. Ristoranti, bar e attività sono nelle vicinanze." },
+    "beach": { "title": "Spiaggia", "description": "Vicino alla spiaggia di La Patacona, nota per la sabbia fine e le acque tranquille. Ideale per famiglie e attività acquatiche." },
+    "pool": { "title": "Piscina", "description": "Grande piscina e piscina per bambini con bagnino, perfette per un tuffo rinfrescante. Area giochi per bambini e zona relax sul prato." },
+    "padel": { "title": "Padel", "description": "Campi da padel disponibili per gli ospiti. Goditi una partita in un ambiente piacevole e sportivo." },
+    "kids": { "title": "Bambini", "description": "Area giochi privata all'interno del complesso, ideale perché i più piccoli si divertano in sicurezza." },
+    "wifi": { "title": "Wi-Fi", "description": "Connessione Wi-Fi gratuita ad alta velocità in tutto l'appartamento, perfetta per lavorare o godersi contenuti online." },
+    "parking": { "title": "Parcheggio", "description": "Posto auto in garage privato incluso, con accesso diretto all'appartamento." },
+    "title": "Servizi", "items": { "seaAccess": "Accesso alla spiaggia", "wifi": "Wi-Fi ad alta velocità", "terrace": "Terrazza con arredi da esterno", "ac": "Aria condizionata", "parking": "Parcheggio gratuito in strada", "pool": "Piscina con bagnino (stagionale)", "padel": "Campi da padel", "kids": "Area giochi privata", "kitchen": "Cucina completamente attrezzata (Nespresso, forno, lavastoviglie)" }
+  },
+  "about": { "title": "Informazioni sull'alloggio", "desc": "Appartamento luminoso esposto a sud con due camere da letto (1 letto matrimoniale + 2 letti singoli), bagno completo con vasca e colonna idromassaggio, soggiorno con TV e Chromecast e cucina completamente attrezzata. Terrazza con poltrone. Vicino alla spiaggia e ai ristoranti locali." },
+  "common": { "location": "A una strada dalla spiaggia. A 15 min dal centro di Valencia con autobus diretto.", "registry": "Dati di registrazione: ESFCTU000046060000646563000000000000000000VT-54340-V2", "poolSeason": "Piscina con bagnino: giugno–settembre, 10:30–15:30 e 16:30–22:00 (altre date su richiesta).", "checkLaw": "Ai sensi del Regio Decreto spagnolo 933/2021, al check-in saranno richiesti i dati personali di tutti gli ospiti." },
+  "gallery": { "title": "Galleria" },
+  "reviews": { "title": "Recensioni", "placeholder": "Questo alloggio ha 20 recensioni e una valutazione media di 4,95." },
+  "footer": { "contact": "Contatta l'host", "copy": "© {year} Appartamento Bonaire" },
+  "cta": { "title": "Verifica la disponibilità e prenota ora!", "bookNow": "Prenota ora", "airbnb": "Prenota su Airbnb", "booking": "Prenota su Booking.com" },
+  "testimonials": { "title": "Recensioni degli ospiti", "placeholder": "Questo alloggio ha 20 recensioni su Airbnb e una valutazione media di 4,95" }
+}
