@@ -13,7 +13,7 @@
       }]"
     >
       <img
-        src="/assets/images/collage.jpeg"
+        src="/assets/images/collage.jpg"
         alt="Bonaire Patacona"
         class="rounded-lg shadow-2xl ring ring-default"
       >
