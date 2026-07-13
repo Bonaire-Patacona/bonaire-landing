@@ -118,7 +118,7 @@
           color: 'airbnb'
         }, {
           label: $t('cta.booking'),
-          to: 'https://www.booking.com/hotel/es/patacona-playa-piscina-wifi-terraza-bonaire.ca.htm',
+          to: 'https://www.booking.com/Share-LG3cjg',
           target: '_blank',
           trailingIcon: 'simple-icons:bookingdotcom',
           color: 'primary'
