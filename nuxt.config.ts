@@ -10,7 +10,8 @@ export default defineNuxtConfig({
 
   site: {
     url: 'https://bonairepatacona.com',
-    name: 'Bonaire Patacona. Apartamentos turísticos en la playa de la Patacona, Valencia'
+    name: 'Bonaire Patacona',
+    description: 'Apartamento turístico junto a la playa de La Patacona, Valencia'
   },
 
   ui: {
@@ -28,7 +29,10 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    '/guia': { prerender: true },
+    '/sitemap.xml': { prerender: true },
+    '/robots.txt': { prerender: true }
   },
 
   compatibilityDate: '2025-01-15',
@@ -47,6 +51,7 @@ export default defineNuxtConfig({
   },
 
   i18n: {
+    baseUrl: 'https://bonairepatacona.com',
     strategy: 'prefix_and_default',
     locales: [
       { code: 'en', iso: 'en-US', name: 'English' },
@@ -64,5 +69,11 @@ export default defineNuxtConfig({
       redirectOn: 'root' // recommended
     },
     vueI18n: './locales/index.ts' // use a small i18n loader file
+  },
+
+  sitemap: {
+    autoLastmod: true,
+    discoverImages: true,
+    exclude: ['/__nuxt_error']
   }
 })

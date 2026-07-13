@@ -77,7 +77,10 @@
     "checkLaw": "De acuerdo con el RD 933/2021, se solicitarán datos personales de todos los huéspedes en el momento del check-in."
   },
   "gallery": {
-    "title": "Galería"
+    "title": "Galería",
+    "openImage": "Abrir imagen ampliada",
+    "expandedImage": "Imagen ampliada",
+    "expandedImageAlt": "Imagen ampliada de Bonaire Patacona"
   },
   "reviews": {
     "title": "Reseñas",
@@ -96,5 +99,12 @@
   "testimonials": {
     "title": "Reseñas de los huéspedes",
     "placeholder": "Este alojamiento tiene 20 reseñas en Airbnb y una puntuación media de 4,95"
+  },
+  "seo": {
+    "homeTitle": "Apartamento turístico en La Patacona, Valencia | Bonaire Patacona",
+    "homeDescription": "Reserva un apartamento turístico familiar junto a la playa de La Patacona, Valencia, con piscina, terraza, Wi-Fi, aire acondicionado, pádel y aparcamiento privado.",
+    "guideTitle": "Guía de La Patacona y Valencia | Bonaire Patacona",
+    "guideDescription": "Descubre restaurantes, playas y planes cerca del apartamento Bonaire Patacona con nuestra guía local de La Patacona, Alboraya y Valencia.",
+    "imageAlt": "Terraza, piscina y playa cerca del apartamento Bonaire Patacona en La Patacona, Valencia"
   }
 }

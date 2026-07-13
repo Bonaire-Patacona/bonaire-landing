@@ -77,7 +77,10 @@
     "checkLaw": "By Spanish law (Real Decreto 933/2021) personal data for all guests is requested at check-in."
   },
   "gallery": {
-    "title": "Gallery"
+    "title": "Gallery",
+    "openImage": "Open enlarged image",
+    "expandedImage": "Enlarged image",
+    "expandedImageAlt": "Enlarged image of Bonaire Patacona"
   },
   "reviews": {
     "title": "Guest reviews",
@@ -96,5 +99,12 @@
   "testimonials": {
     "title": "Guest reviews",
     "placeholder": "This listing has 20 reviews on Airbnb and an average rating of 4.95"
+  },
+  "seo": {
+    "homeTitle": "Holiday apartment in La Patacona, Valencia | Bonaire Patacona",
+    "homeDescription": "Book a family-friendly holiday apartment by La Patacona beach in Valencia with pool, terrace, Wi-Fi, air conditioning, padel courts and private parking.",
+    "guideTitle": "La Patacona and Valencia guide | Bonaire Patacona",
+    "guideDescription": "Explore restaurants, beaches and things to do near Bonaire Patacona with our local guide to La Patacona, Alboraya and Valencia.",
+    "imageAlt": "Terrace, pool and beach near Bonaire Patacona apartment in La Patacona, Valencia"
   }
 }

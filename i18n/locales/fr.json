@@ -1,24 +1,110 @@
 {
-  "menu": { "home": "Accueil", "guia": "Guide", "gallery": "Galerie", "reviews": "Avis", "contact": "Contact" },
-  "site": { "title": "Appartement Bonaire Patacona", "subtitle": "Plage · Piscine · Wi-Fi · Terrasse · Climatisation · Parking" },
-  "hero": { "title": "Appartement à La Patacona — terrasse et à quelques pas de la plage", "description": "Découvrez cet appartement chaleureux dans une résidence familiale. Idéal pour les couples et les petites familles : terrasse, Wi-Fi haut débit et cuisine entièrement équipée.", "book": "Vérifier les disponibilités" },
-  "guia": { "title": "Guide de La Patacona", "description": "Découvrez les lieux incontournables de La Patacona dans notre guide publié sur Airbnb", "airbnb": "Voir le guide" },
-  "features": {
-    "terrace": { "title": "Terrasse", "description": "Terrasse exposée au sud avec mobilier d'extérieur, idéale pour se détendre après une journée à la plage ou à découvrir la ville." },
-    "location": { "title": "Emplacement", "description": "Situé à La Patacona, à seulement une rue de la plage et à 15 minutes du centre de Valence en bus direct. Profitez des restaurants, bars et activités à proximité." },
-    "beach": { "title": "Plage", "description": "Tout près de la plage de La Patacona, réputée pour son sable fin et ses eaux calmes. Idéale pour les familles et les activités nautiques." },
-    "pool": { "title": "Piscine", "description": "Grande piscine et pataugeoire avec maître-nageur, parfaites pour se rafraîchir. Aire de jeux pour enfants et espace de détente sur pelouse." },
-    "padel": { "title": "Padel", "description": "Terrains de padel à disposition des hôtes. Profitez d'un match dans un cadre agréable et sportif." },
-    "kids": { "title": "Enfants", "description": "Aire de jeux privée dans la résidence, idéale pour que les plus petits s'amusent en toute sécurité." },
-    "wifi": { "title": "Wi-Fi", "description": "Connexion Wi-Fi haut débit gratuite dans tout l'appartement, idéale pour travailler ou profiter de contenus en ligne." },
-    "parking": { "title": "Parking", "description": "Place de parking dans un garage privé incluse, avec accès direct à l'appartement." },
-    "title": "Les atouts", "items": { "seaAccess": "Accès à la plage", "wifi": "Wi-Fi haut débit", "terrace": "Terrasse avec mobilier d'extérieur", "ac": "Climatisation", "parking": "Stationnement gratuit dans la rue", "pool": "Piscine avec maître-nageur (en saison)", "padel": "Terrains de padel", "kids": "Aire de jeux privée", "kitchen": "Cuisine entièrement équipée (Nespresso, four, lave-vaisselle)" }
+  "menu": {
+    "home": "Accueil",
+    "guia": "Guide",
+    "gallery": "Galerie",
+    "reviews": "Avis",
+    "contact": "Contact"
   },
-  "about": { "title": "À propos du logement", "desc": "Appartement lumineux, exposé au sud, avec deux chambres (1 lit double + 2 lits simples), une salle de bains complète avec baignoire et colonne d'hydromassage, un salon avec TV et Chromecast, et une cuisine entièrement équipée. Terrasse avec fauteuils. Près de la plage et des restaurants locaux." },
-  "common": { "location": "À une rue de la plage. À 15 min du centre de Valence en bus direct.", "registry": "Numéro d'enregistrement : ESFCTU000046060000646563000000000000000000VT-54340-V2", "poolSeason": "Piscine avec maître-nageur : juin–septembre, de 10 h 30 à 15 h 30 et de 16 h 30 à 22 h (autres dates sur demande).", "checkLaw": "Conformément au décret royal espagnol 933/2021, les données personnelles de tous les hôtes seront demandées lors de l'enregistrement." },
-  "gallery": { "title": "Galerie" },
-  "reviews": { "title": "Avis", "placeholder": "Ce logement compte 20 avis et une note moyenne de 4,95." },
-  "footer": { "contact": "Contacter l'hôte", "copy": "© {year} Appartement Bonaire" },
-  "cta": { "title": "Vérifiez les disponibilités et réservez dès maintenant !", "bookNow": "Réserver", "airbnb": "Réserver sur Airbnb", "booking": "Réserver sur Booking.com" },
-  "testimonials": { "title": "Avis des voyageurs", "placeholder": "Ce logement compte 20 avis sur Airbnb et une note moyenne de 4,95" }
+  "site": {
+    "title": "Appartement Bonaire Patacona",
+    "subtitle": "Plage · Piscine · Wi-Fi · Terrasse · Climatisation · Parking"
+  },
+  "hero": {
+    "title": "Appartement à La Patacona — terrasse et à quelques pas de la plage",
+    "description": "Découvrez cet appartement chaleureux dans une résidence familiale. Idéal pour les couples et les petites familles : terrasse, Wi-Fi haut débit et cuisine entièrement équipée.",
+    "book": "Vérifier les disponibilités"
+  },
+  "guia": {
+    "title": "Guide de La Patacona",
+    "description": "Découvrez les lieux incontournables de La Patacona dans notre guide publié sur Airbnb",
+    "airbnb": "Voir le guide"
+  },
+  "features": {
+    "terrace": {
+      "title": "Terrasse",
+      "description": "Terrasse exposée au sud avec mobilier d'extérieur, idéale pour se détendre après une journée à la plage ou à découvrir la ville."
+    },
+    "location": {
+      "title": "Emplacement",
+      "description": "Situé à La Patacona, à seulement une rue de la plage et à 15 minutes du centre de Valence en bus direct. Profitez des restaurants, bars et activités à proximité."
+    },
+    "beach": {
+      "title": "Plage",
+      "description": "Tout près de la plage de La Patacona, réputée pour son sable fin et ses eaux calmes. Idéale pour les familles et les activités nautiques."
+    },
+    "pool": {
+      "title": "Piscine",
+      "description": "Grande piscine et pataugeoire avec maître-nageur, parfaites pour se rafraîchir. Aire de jeux pour enfants et espace de détente sur pelouse."
+    },
+    "padel": {
+      "title": "Padel",
+      "description": "Terrains de padel à disposition des hôtes. Profitez d'un match dans un cadre agréable et sportif."
+    },
+    "kids": {
+      "title": "Enfants",
+      "description": "Aire de jeux privée dans la résidence, idéale pour que les plus petits s'amusent en toute sécurité."
+    },
+    "wifi": {
+      "title": "Wi-Fi",
+      "description": "Connexion Wi-Fi haut débit gratuite dans tout l'appartement, idéale pour travailler ou profiter de contenus en ligne."
+    },
+    "parking": {
+      "title": "Parking",
+      "description": "Place de parking dans un garage privé incluse, avec accès direct à l'appartement."
+    },
+    "title": "Les atouts",
+    "items": {
+      "seaAccess": "Accès à la plage",
+      "wifi": "Wi-Fi haut débit",
+      "terrace": "Terrasse avec mobilier d'extérieur",
+      "ac": "Climatisation",
+      "parking": "Stationnement gratuit dans la rue",
+      "pool": "Piscine avec maître-nageur (en saison)",
+      "padel": "Terrains de padel",
+      "kids": "Aire de jeux privée",
+      "kitchen": "Cuisine entièrement équipée (Nespresso, four, lave-vaisselle)"
+    }
+  },
+  "about": {
+    "title": "À propos du logement",
+    "desc": "Appartement lumineux, exposé au sud, avec deux chambres (1 lit double + 2 lits simples), une salle de bains complète avec baignoire et colonne d'hydromassage, un salon avec TV et Chromecast, et une cuisine entièrement équipée. Terrasse avec fauteuils. Près de la plage et des restaurants locaux."
+  },
+  "common": {
+    "location": "À une rue de la plage. À 15 min du centre de Valence en bus direct.",
+    "registry": "Numéro d'enregistrement : ESFCTU000046060000646563000000000000000000VT-54340-V2",
+    "poolSeason": "Piscine avec maître-nageur : juin–septembre, de 10 h 30 à 15 h 30 et de 16 h 30 à 22 h (autres dates sur demande).",
+    "checkLaw": "Conformément au décret royal espagnol 933/2021, les données personnelles de tous les hôtes seront demandées lors de l'enregistrement."
+  },
+  "gallery": {
+    "title": "Galerie",
+    "openImage": "Ouvrir l’image agrandie",
+    "expandedImage": "Image agrandie",
+    "expandedImageAlt": "Image agrandie de Bonaire Patacona"
+  },
+  "reviews": {
+    "title": "Avis",
+    "placeholder": "Ce logement compte 20 avis et une note moyenne de 4,95."
+  },
+  "footer": {
+    "contact": "Contacter l'hôte",
+    "copy": "© {year} Appartement Bonaire"
+  },
+  "cta": {
+    "title": "Vérifiez les disponibilités et réservez dès maintenant !",
+    "bookNow": "Réserver",
+    "airbnb": "Réserver sur Airbnb",
+    "booking": "Réserver sur Booking.com"
+  },
+  "testimonials": {
+    "title": "Avis des voyageurs",
+    "placeholder": "Ce logement compte 20 avis sur Airbnb et une note moyenne de 4,95"
+  },
+  "seo": {
+    "homeTitle": "Appartement de vacances à La Patacona, Valence | Bonaire Patacona",
+    "homeDescription": "Réservez un appartement familial près de la plage de La Patacona à Valence avec piscine, terrasse, Wi-Fi, climatisation, padel et parking privé.",
+    "guideTitle": "Guide de La Patacona et Valence | Bonaire Patacona",
+    "guideDescription": "Découvrez restaurants, plages et activités près de Bonaire Patacona avec notre guide local de La Patacona, Alboraya et Valence.",
+    "imageAlt": "Terrasse, piscine et plage près de l’appartement Bonaire Patacona à La Patacona, Valence"
+  }
 }
