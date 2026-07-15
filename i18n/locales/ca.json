@@ -31,27 +31,27 @@
     },
     "beach": {
       "title": "Platja",
-      "description": "Molt a prop de la platja de La Patacona, coneguda per la seva sorra fina i aigües tranquil·les. Ideal per a famílies i activitats aquàtiques."  
+      "description": "Molt a prop de la platja de La Patacona, coneguda per la seva sorra fina i aigües tranquil·les. Ideal per a famílies i activitats aquàtiques."
     },
     "pool": {
       "title": "Piscina",
-      "description": "Piscina gran i infantil amb socorrista, perfecta per a un bany refrescant. Zona de jocs per a nens i àrea de descans amb gespa."  
+      "description": "Piscina gran i infantil amb socorrista, perfecta per a un bany refrescant. Zona de jocs per a nens i àrea de descans amb gespa."
     },
     "padel": {
       "title": "Pàdel",
-      "description": "Pistes de pàdel disponibles per als hostes. Gaudeix d'un partit en un entorn agradable i esportiu."  
+      "description": "Pistes de pàdel disponibles per als hostes. Gaudeix d'un partit en un entorn agradable i esportiu."
     },
     "kids": {
       "title": "Nens",
-      "description": "Parc infantil privat dins del complex, ideal per a que els més petits es diverteixin en un entorn segur."  
+      "description": "Parc infantil privat dins del complex, ideal per a que els més petits es diverteixin en un entorn segur."
     },
     "wifi": {
       "title": "Wi-Fi",
-      "description": "Connexió Wi-Fi d'alta velocitat gratuïta a tot l'apartament, perfecta per a treballar o gaudir de continguts en línia."  
+      "description": "Connexió Wi-Fi d'alta velocitat gratuïta a tot l'apartament, perfecta per a treballar o gaudir de continguts en línia."
     },
     "parking": {
       "title": "Aparcament",
-      "description": "Aparcament en garatge privat inclòs, amb accés directe a l'apartament."  
+      "description": "Aparcament en garatge privat inclòs, amb accés directe a l'apartament."
     },
     "title": "Què ofereix",
     "items": {
@@ -77,7 +77,10 @@
     "checkLaw": "Segons Reial decret 933/2021, es sol·licitaran dades personals de tots els hostes en el moment del check-in."
   },
   "gallery": {
-    "title": "Galeria"
+    "title": "Galeria",
+    "openImage": "Obrir imatge ampliada",
+    "expandedImage": "Imatge ampliada",
+    "expandedImageAlt": "Imatge ampliada de Bonaire Patacona"
   },
   "reviews": {
     "title": "Ressenyes",
@@ -96,5 +99,12 @@
   "testimonials": {
     "title": "Ressenyes dels hostes",
     "placeholder": "Aquest allotjament té a Airbnb 20 ressenyes i una puntuació mitjana de 4,95"
+  },
+  "seo": {
+    "homeTitle": "Apartament turístic a La Patacona, València | Bonaire Patacona",
+    "homeDescription": "Reserva un apartament turístic familiar al costat de la platja de La Patacona, València, amb piscina, terrassa, Wi-Fi, aire condicionat, pàdel i aparcament privat.",
+    "guideTitle": "Guia de La Patacona i València | Bonaire Patacona",
+    "guideDescription": "Descobreix restaurants, platges i plans prop de l’apartament Bonaire Patacona amb la nostra guia local de La Patacona, Alboraia i València.",
+    "imageAlt": "Terrassa, piscina i platja prop de l’apartament Bonaire Patacona a La Patacona, València"
   }
 }

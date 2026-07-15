@@ -14,7 +14,7 @@
     >
       <img
         src="/assets/images/collage.jpg"
-        alt="Bonaire Patacona"
+        :alt="$t('seo.imageAlt')"
         class="rounded-lg shadow-2xl ring ring-default"
       >
     </UPageHero>
@@ -41,14 +41,14 @@
         <button
           type="button"
           class="gallery-image-button"
-          :aria-label="'Obrir imatge ampliada'"
+          :aria-label="$t('gallery.openImage')"
           @click="openImage(item)"
         >
           <img
             :src="item"
             width="350"
             height="250"
-            alt="Bonaire Patacona"
+            :alt="$t('seo.imageAlt')"
             class="rounded-lg"
           >
         </button>
@@ -56,14 +56,14 @@
 
       <UModal
         v-model:open="isImageModalOpen"
-        title="Imatge ampliada"
+        :title="$t('gallery.expandedImage')"
         class="max-w-6xl"
       >
         <template #body>
           <img
             v-if="selectedImage"
             :src="selectedImage"
-            alt="Bonaire Patacona ampliada"
+            :alt="$t('gallery.expandedImageAlt')"
             class="max-h-[80vh] w-full rounded-lg object-contain"
           >
         </template>
@@ -116,6 +116,12 @@
           target: '_blank',
           trailingIcon: 'fa6-brands:airbnb',
           color: 'airbnb'
+        }, {
+          label: $t('cta.booking'),
+          to: 'https://www.booking.com/Share-LG3cjg',
+          target: '_blank',
+          trailingIcon: 'simple-icons:bookingdotcom',
+          color: 'primary'
         }]"
       />
     </UPageSection>
