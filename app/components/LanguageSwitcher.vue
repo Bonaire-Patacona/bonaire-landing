@@ -23,6 +23,9 @@
     }, {
       label: 'Nederlands',
       to: switchLocalePath('nl')
+    }, {
+      label: 'Svenska',
+      to: switchLocalePath('sv')
     }]"
     :content="{ align: 'start' }"
     :ui="{ content: 'min-w-fit' }"

@@ -1,0 +1,24 @@
+{
+  "menu": { "home": "Hem", "guia": "Guide", "gallery": "Galleri", "reviews": "Recensioner", "contact": "Kontakt" },
+  "site": { "title": "Bonaire Patacona-lägenheten", "subtitle": "Strand · Pool · Wi-Fi · Terrass · Luftkonditionering · Parkering" },
+  "hero": { "title": "Lägenhet vid havet i La Patacona — terrass och nära stranden", "description": "Njut av denna mysiga lägenhet i ett familjevänligt bostadsområde. Perfekt för par och små familjer — med terrass, snabbt Wi-Fi och ett fullt utrustat kök.", "book": "Kontrollera tillgänglighet" },
+  "guia": { "title": "Guide till La Patacona", "description": "Upptäck höjdpunkterna i La Patacona i vår guide som publicerats på Airbnb", "airbnb": "Visa guiden" },
+  "features": {
+    "terrace": { "title": "Terrass", "description": "Södervänd terrass med utemöbler, perfekt för avkoppling efter en dag på stranden eller i staden." },
+    "location": { "title": "Läge", "description": "Belägen i La Patacona, bara en gata från stranden och 15 minuter från Valencias centrum med direktbuss. Restauranger, barer och aktiviteter finns i närheten." },
+    "beach": { "title": "Strand", "description": "Mycket nära La Patacona-stranden, känd för sin fina sand och sitt lugna vatten. Perfekt för familjer och vattenaktiviteter." },
+    "pool": { "title": "Pool", "description": "Stor pool och barnpool med badvakt, perfekt för ett uppfriskande dopp. Det finns även lekplats och grönområde för avkoppling." },
+    "padel": { "title": "Padel", "description": "Padelbanor finns tillgängliga för gäster. Njut av en match i en trevlig och sportig miljö." },
+    "kids": { "title": "Barn", "description": "Privat lekplats för barn inom området, idealisk för att de små ska kunna ha roligt på ett tryggt sätt." },
+    "wifi": { "title": "Wi-Fi", "description": "Gratis snabbt Wi-Fi i hela lägenheten, perfekt för arbete eller för att njuta av innehåll online." },
+    "parking": { "title": "Parkering", "description": "Privat garageparkering ingår, med direkt tillgång till lägenheten." },
+    "title": "Höjdpunkter", "items": { "seaAccess": "Tillgång till stranden", "wifi": "Snabbt Wi-Fi", "terrace": "Terrass med utemöbler", "ac": "Luftkonditionering", "parking": "Gratis parkering på gatan", "pool": "Pool med badvakt (säsongsöppen)", "padel": "Padelbanor", "kids": "Privat lekplats för barn", "kitchen": "Fullt utrustat kök (Nespresso, ugn, diskmaskin)" }
+  },
+  "about": { "title": "Om boendet", "desc": "Solig, södervänd lägenhet med två sovrum (1 dubbelsäng + 2 enkelsängar), ett komplett badrum med badkar och hydromassagepelare, vardagsrum med TV och Chromecast samt fullt utrustat kök. Terrass med sittplatser. Nära stranden och lokala restauranger." },
+  "common": { "location": "En gata från stranden. 15 minuter till Valencias centrum med direktbuss.", "registry": "Registrering: ESFCTU000046060000646563000000000000000000VT-54340-V2", "poolSeason": "Pool med badvakt: juni–september kl. 10.30–15.30 och 16.30–22.00 (andra datum på förfrågan).", "checkLaw": "Enligt spansk lag (kungligt dekret 933/2021) begärs personuppgifter för samtliga gäster vid incheckning." },
+  "gallery": { "title": "Galleri" },
+  "reviews": { "title": "Gästrecensioner", "placeholder": "Detta boende har 20 recensioner och ett genomsnittligt betyg på 4,95." },
+  "footer": { "contact": "Kontakta värden", "copy": "© {year} Bonaire-lägenheten" },
+  "cta": { "title": "Kontrollera tillgänglighet och boka nu!", "bookNow": "Boka nu", "airbnb": "Boka på Airbnb", "booking": "Boka på Booking.com" },
+  "testimonials": { "title": "Gästrecensioner", "placeholder": "Detta boende har 20 recensioner på Airbnb och ett genomsnittligt betyg på 4,95" }
+}

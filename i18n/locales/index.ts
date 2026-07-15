@@ -5,9 +5,10 @@ import fr from './fr.json'
 import de from './de.json'
 import it from './it.json'
 import nl from './nl.json'
+import sv from './sv.json'
 
 export default {
   legacy: false,
   locale: 'es',
-  messages: { en, es, ca, fr, de, it, nl }
+  messages: { en, es, ca, fr, de, it, nl, sv }
 }

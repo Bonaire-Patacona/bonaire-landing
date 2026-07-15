@@ -55,7 +55,8 @@ export default defineNuxtConfig({
       { code: 'fr', iso: 'fr-FR', name: 'Français' },
       { code: 'de', iso: 'de-DE', name: 'Deutsch' },
       { code: 'it', iso: 'it-IT', name: 'Italiano' },
-      { code: 'nl', iso: 'nl-NL', name: 'Nederlands' }
+      { code: 'nl', iso: 'nl-NL', name: 'Nederlands' },
+      { code: 'sv', iso: 'sv-SE', name: 'Svenska' }
     ],
     defaultLocale: 'es',
     detectBrowserLanguage: {
