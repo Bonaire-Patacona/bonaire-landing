@@ -23,6 +23,7 @@ export interface AvailabilityDay {
 }
 
 export interface AvailabilityResponse {
+  property: { id: string, slug: string, name: string }
   from: string
   to: string
   currency: string
@@ -55,6 +56,7 @@ export interface NightPrice {
 }
 
 export interface QuoteResponse {
+  property: { id: string, slug: string, name: string }
   currency: string
   check_in: string
   check_out: string
@@ -97,7 +99,7 @@ export function calendarDateToIso(value: CalendarDateLike): string {
  * are re-fetched whenever the range or the party size changes, because only the
  * server may decide what a stay costs.
  */
-export function useBookingEngine() {
+export function useBookingEngine(property?: MaybeRef<string | undefined>) {
   const availability = ref<AvailabilityResponse | null>(null)
   const quote = ref<QuoteResponse | null>(null)
   const loadingAvailability = ref(false)
@@ -115,7 +117,7 @@ export function useBookingEngine() {
     loadingAvailability.value = true
     try {
       availability.value = await $fetch<AvailabilityResponse>('/api/availability', {
-        query: { from: from ?? todayIso(), to: to ?? addDays(todayIso(), 365) }
+        query: { property: toValue(property), from: from ?? todayIso(), to: to ?? addDays(todayIso(), 365) }
       })
     } finally {
       loadingAvailability.value = false
@@ -132,7 +134,8 @@ export function useBookingEngine() {
           check_in: input.checkIn,
           check_out: input.checkOut,
           adults: input.adults,
-          children: input.children
+          children: input.children,
+          property: toValue(property)
         }
       })
     } catch (error) {

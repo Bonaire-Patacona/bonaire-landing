@@ -36,9 +36,11 @@ interface Overview {
 const { authFetch } = useAdminApi()
 const toast = useToast()
 const syncing = ref(false)
+const { propertyId } = useAdminProperty()
 
 const { data, refresh, pending } = await useAsyncData('admin-overview', () =>
-  authFetch<Overview>('/api/admin/overview'))
+  authFetch<Overview>('/api/admin/overview'),
+{ watch: [propertyId] })
 
 const money = (cents: number) => formatMoney(cents, data.value?.currency ?? 'EUR')
 

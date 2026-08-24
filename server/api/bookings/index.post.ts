@@ -8,12 +8,13 @@
  */
 import { isIsoDate, today } from '~~/server/utils/dates'
 import { isRangeAvailable, isRangeOpen, runHousekeeping } from '~~/server/utils/availability'
-import { assertNoDbError, getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getCancellationPolicy, getProperty, getRateOverrides, getRatePeriods, getSettings, serviceClient } from '~~/server/utils/supabase'
 import { QuoteError, buildQuote } from '~~/server/utils/pricing'
 import { generateReference } from '~~/server/utils/reference'
 import { getStripe, isStripeConfigured, toStripeAmount } from '~~/server/utils/stripe'
 
 interface CreateBookingBody {
+  property?: string
   check_in?: string
   check_out?: string
   adults?: number
@@ -48,11 +49,12 @@ export default defineEventHandler(async (event) => {
   // Free up anything whose hold lapsed, so those dates can be re-sold now.
   await runHousekeeping()
 
+  const property = await getProperty(body.property)
   const [settings, periods, overrides, cancellation] = await Promise.all([
-    getSettings(true),
-    getRatePeriods(true),
-    getRateOverrides(true),
-    getCancellationPolicy(true)
+    getSettings(property.id, true),
+    getRatePeriods(property.id, true),
+    getRateOverrides(property.id, true),
+    getCancellationPolicy(property.id, true, body.check_in)
   ])
 
   let quote
@@ -76,7 +78,7 @@ export default defineEventHandler(async (event) => {
     throw error
   }
 
-  if (!(await isRangeOpen(quote.check_in, quote.check_out))) {
+  if (!(await isRangeOpen(property.id, quote.check_in, quote.check_out))) {
     throw createError({
       statusCode: 409,
       statusMessage: 'Those dates are not open for booking',
@@ -84,7 +86,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (!(await isRangeAvailable(quote.check_in, quote.check_out))) {
+  if (!(await isRangeAvailable(property.id, quote.check_in, quote.check_out))) {
     throw createError({
       statusCode: 409,
       statusMessage: 'Those dates are no longer available',
@@ -100,6 +102,7 @@ export default defineEventHandler(async (event) => {
   const { data: booking, error } = await supabase
     .from('bookings')
     .insert({
+      property_id: property.id,
       reference,
       status: 'pending',
       source: 'direct',
@@ -183,11 +186,12 @@ export default defineEventHandler(async (event) => {
       cancel_url: `${siteUrl}/reserva/${booking.reference}?cancelled=1`,
       metadata: {
         booking_id: booking.id,
+        property_id: property.id,
         reference: booking.reference,
         kind: 'deposit'
       },
       payment_intent_data: {
-        metadata: { booking_id: booking.id, reference: booking.reference, kind: 'deposit' },
+        metadata: { booking_id: booking.id, property_id: property.id, reference: booking.reference, kind: 'deposit' },
         ...(needsCardOnFile ? { setup_future_usage: 'off_session' as const } : {})
       },
       line_items: [{

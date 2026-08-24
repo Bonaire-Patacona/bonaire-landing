@@ -6,12 +6,13 @@
  */
 import { addDays, isIsoDate, today } from '~~/server/utils/dates'
 import { getUnavailableDays } from '~~/server/utils/availability'
-import { getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
+import { getProperty, getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
 import { minNightsFor, nightlyRate } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const settings = await getSettings()
+  const property = await getProperty(typeof query.property === 'string' ? query.property : undefined)
+  const settings = await getSettings(property.id)
 
   const from = isIsoDate(query.from) ? query.from : today()
   const maxTo = addDays(today(), settings.booking_window_days)
@@ -20,9 +21,9 @@ export default defineEventHandler(async (event) => {
   if (to <= from) to = addDays(from, 1)
 
   const [unavailable, periods, overrides] = await Promise.all([
-    getUnavailableDays(from, to),
-    getRatePeriods(),
-    getRateOverrides()
+    getUnavailableDays(property.id, from, to),
+    getRatePeriods(property.id),
+    getRateOverrides(property.id)
   ])
 
   const taken = new Set(unavailable)
@@ -39,6 +40,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'public, max-age=60, stale-while-revalidate=300')
 
   return {
+    property: { id: property.id, slug: property.slug, name: property.name },
     from,
     to,
     currency: settings.currency,

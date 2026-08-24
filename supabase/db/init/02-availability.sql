@@ -22,7 +22,8 @@ create or replace view public.calendar_blocks as
     b.currency                    as currency,
     null::text                    as event_kind,
     null::text                    as link,
-    null::boolean                 as assume_reservations
+    null::boolean                 as assume_reservations,
+    b.property_id                 as property_id
   from public.bookings b
   where public.booking_blocks_calendar(b)
 union all
@@ -39,7 +40,8 @@ union all
     null::text,
     null::text,
     null::text,
-    null::boolean
+    null::boolean,
+    d.property_id
   from public.blocked_dates d
 union all
   select
@@ -55,7 +57,8 @@ union all
     null::text,
     e.event_kind,
     e.link,
-    coalesce(f.treat_closed_as_reservation, f.channel = 'booking')
+    coalesce(f.treat_closed_as_reservation, f.channel = 'booking'),
+    f.property_id
   from public.external_blocks e
   join public.ical_feeds f on f.id = e.feed_id
   where f.active;

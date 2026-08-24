@@ -34,6 +34,7 @@ interface Booking {
 const supabase = useDb()
 const { authFetch } = useAdminApi()
 const toast = useToast()
+const { propertyId } = useAdminProperty()
 
 const statusFilter = ref('all')
 const search = ref('')
@@ -54,12 +55,14 @@ const statusOptions = [
 const { data: bookings, refresh, pending } = await useAsyncData<Booking[]>(
   'admin-bookings',
   async () => {
-    let query = supabase.from('bookings').select('*').order('check_in', { ascending: false }).limit(300)
+    if (!propertyId.value) return []
+    let query = supabase.from('bookings').select('*').eq('property_id', propertyId.value)
+      .order('check_in', { ascending: false }).limit(300)
     if (statusFilter.value !== 'all') query = query.eq('status', statusFilter.value)
     const { data } = await query
     return (data ?? []) as Booking[]
   },
-  { watch: [statusFilter] }
+  { watch: [statusFilter, propertyId] }
 )
 
 // Arriving from a pill on the calendar: open that booking straight away, once.
@@ -100,10 +103,11 @@ const statusColor = (status: string) => ({
 }[status] ?? 'neutral') as 'success' | 'warning' | 'error' | 'neutral'
 
 const { data: settings } = await useAsyncData('admin-bookings-settings', async () => {
+  if (!propertyId.value) return null
   const { data } = await supabase
-    .from('app_settings').select('security_deposit_mode').eq('id', 1).single()
+    .from('app_settings').select('security_deposit_mode').eq('property_id', propertyId.value).single()
   return data as { security_deposit_mode: 'none' | 'card_on_file' } | null
-})
+}, { watch: [propertyId] })
 
 /** A card is only on file when the guest paid through Stripe with one saved. */
 const canChargeCard = (booking: Booking) =>

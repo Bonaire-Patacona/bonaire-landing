@@ -13,7 +13,8 @@ const props = withDefaults(defineProps<{
   /** Prefill from the URL, e.g. /reservar?check_in=2026-07-04&check_out=2026-07-11 */
   initialCheckIn?: string
   initialCheckOut?: string
-}>(), { initialCheckIn: undefined, initialCheckOut: undefined })
+  property?: string
+}>(), { initialCheckIn: undefined, initialCheckOut: undefined, property: undefined })
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
@@ -28,7 +29,7 @@ const {
   loadAvailability,
   fetchQuote,
   isDateUnavailable
-} = useBookingEngine()
+} = useBookingEngine(toRef(props, 'property'))
 
 // shallowRef, not ref: DateValue instances carry private fields that Vue's deep
 // unwrapping would strip, and the calendar replaces the whole range anyway.
@@ -145,6 +146,7 @@ async function submit() {
     }>('/api/bookings', {
       method: 'POST',
       body: {
+        property: props.property,
         check_in: checkIn.value,
         check_out: checkOut.value,
         adults: adults.value,

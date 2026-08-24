@@ -8,13 +8,14 @@
  * `dry_run` answers "what would this cost?" without touching anything, so the
  * back office can show the number before the host commits.
  */
-import { assertNoDbError, requireAdmin, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getAdminProperty, requireAdmin, serviceClient } from '~~/server/utils/supabase'
 import { getStripe, isStripeConfigured } from '~~/server/utils/stripe'
 import { policyFromSnapshot, refundFor } from '~~/server/utils/cancellation'
 import { today } from '~~/server/utils/dates'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
+  const property = await getAdminProperty(event)
 
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing booking id' })
@@ -28,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const supabase = serviceClient()
 
   const { data: booking, error } = await supabase
-    .from('bookings').select('*').eq('id', id).single()
+    .from('bookings').select('*').eq('id', id).eq('property_id', property.id).single()
   assertNoDbError(error, 'loading the booking')
   if (!booking) throw createError({ statusCode: 404, statusMessage: 'Booking not found' })
 

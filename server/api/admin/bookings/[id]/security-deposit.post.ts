@@ -10,11 +10,12 @@
  * only charged if something actually breaks.
  */
 import Stripe from 'stripe'
-import { assertNoDbError, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getAdminProperty, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
 import { getStripe, isStripeConfigured, toStripeAmount } from '~~/server/utils/stripe'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
+  const property = await getAdminProperty(event)
 
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing booking id' })
@@ -23,11 +24,11 @@ export default defineEventHandler(async (event) => {
   const supabase = serviceClient()
 
   const { data: booking, error } = await supabase
-    .from('bookings').select('*').eq('id', id).single()
+    .from('bookings').select('*').eq('id', id).eq('property_id', property.id).single()
   assertNoDbError(error, 'loading the booking')
   if (!booking) throw createError({ statusCode: 404, statusMessage: 'Booking not found' })
 
-  const settings = await getSettings()
+  const settings = await getSettings(property.id)
   if (settings.security_deposit_mode !== 'card_on_file') {
     throw createError({
       statusCode: 409,

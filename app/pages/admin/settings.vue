@@ -9,6 +9,7 @@ definePageMeta({ layout: 'admin', middleware: 'admin' })
 const supabase = useDb()
 const toast = useToast()
 const saving = ref(false)
+const { propertyId, refresh: refreshProperties } = useAdminProperty()
 
 interface Settings {
   id: number
@@ -44,10 +45,11 @@ interface Settings {
   security_deposit_mode: 'none' | 'card_on_file'
 }
 
-const { data: settings } = await useAsyncData<Settings>('admin-settings', async () => {
-  const { data } = await supabase.from('app_settings').select('*').eq('id', 1).single()
+const { data: settings } = await useAsyncData<Settings | null>('admin-settings', async () => {
+  if (!propertyId.value) return null
+  const { data } = await supabase.from('app_settings').select('*').eq('property_id', propertyId.value).single()
   return data as unknown as Settings
-})
+}, { watch: [propertyId] })
 
 // Money fields are edited in euros and stored in cents.
 const form = reactive({
@@ -164,7 +166,12 @@ async function save() {
     auto_charge_balance: form.auto_charge_balance,
     balance_retry_days: form.balance_retry_days,
     security_deposit_mode: form.security_deposit_mode
-  }).eq('id', 1)
+  }).eq('property_id', propertyId.value)
+
+  if (!error && propertyId.value) {
+    await supabase.from('properties').update({ name: form.property_name.trim() }).eq('id', propertyId.value)
+    await refreshProperties()
+  }
 
   saving.value = false
 

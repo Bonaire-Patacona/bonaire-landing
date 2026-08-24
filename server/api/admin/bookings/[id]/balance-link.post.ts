@@ -6,18 +6,19 @@
  * link means the host is taking the collection over by hand, so any pending
  * automatic charge stands down.
  */
-import { assertNoDbError, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getAdminProperty, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
 import { createBalanceCheckout } from '~~/server/utils/payments'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
+  const property = await getAdminProperty(event)
 
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing booking id' })
 
   const supabase = serviceClient()
   const { data: booking, error } = await supabase
-    .from('bookings').select('*').eq('id', id).single()
+    .from('bookings').select('*').eq('id', id).eq('property_id', property.id).single()
   assertNoDbError(error, 'loading the booking')
   if (!booking) throw createError({ statusCode: 404, statusMessage: 'Booking not found' })
 
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'This booking is already paid in full' })
   }
 
-  const settings = await getSettings()
+  const settings = await getSettings(property.id)
   const session = await createBalanceCheckout(booking, outstanding, settings)
 
   await supabase.from('bookings')

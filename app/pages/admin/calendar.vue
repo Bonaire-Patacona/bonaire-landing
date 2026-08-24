@@ -46,6 +46,7 @@ interface RateDay {
 
 const supabase = useDb()
 const toast = useToast()
+const { propertyId } = useAdminProperty()
 
 const cursor = ref(todayIso().slice(0, 7)) // YYYY-MM
 const showBlockModal = ref(false)
@@ -72,24 +73,27 @@ const gridEnd = computed(() => addDays(gridStart.value, 42)) // exclusive
 const { data: blocks, refresh: refreshBlocks, pending } = await useAsyncData<Block[]>(
   'admin-calendar',
   async () => {
+    if (!propertyId.value) return []
     const { data } = await supabase
       .from('calendar_blocks')
       .select('*')
+      .eq('property_id', propertyId.value)
       .lt('start_date', gridEnd.value)
       .gt('end_date', gridStart.value)
     return (data ?? []) as Block[]
   },
-  { watch: [cursor] }
+  { watch: [cursor, propertyId] }
 )
 
 const { data: house } = await useAsyncData('admin-calendar-house', async () => {
+  if (!propertyId.value) return { availability_mode: 'open' as const, currency: 'EUR' }
   const { data } = await supabase
-    .from('app_settings').select('availability_mode, currency').eq('id', 1).single()
+    .from('app_settings').select('availability_mode, currency').eq('property_id', propertyId.value).single()
   return (data ?? { availability_mode: 'open', currency: 'EUR' }) as {
     availability_mode: 'open' | 'closed'
     currency: string
   }
-})
+}, { watch: [propertyId] })
 
 const mode = computed(() => house.value?.availability_mode ?? 'open')
 const currency = computed(() => house.value?.currency ?? 'EUR')
@@ -97,26 +101,30 @@ const currency = computed(() => house.value?.currency ?? 'EUR')
 const { data: openPeriods, refresh: refreshOpen } = await useAsyncData<OpenPeriod[]>(
   'admin-calendar-open',
   async () => {
+    if (!propertyId.value) return []
     const { data } = await supabase
       .from('open_periods')
       .select('*')
+      .eq('property_id', propertyId.value)
       .lt('start_date', gridEnd.value)
       .gt('end_date', gridStart.value)
     return (data ?? []) as OpenPeriod[]
   },
-  { watch: [cursor] }
+  { watch: [cursor, propertyId] }
 )
 
 const { data: rates, refresh: refreshRates } = await useAsyncData<RateDay[]>(
   'admin-calendar-rates',
   async () => {
+    if (!propertyId.value) return []
     const { data } = await supabase.rpc('rate_calendar', {
+      p_property_id: propertyId.value,
       p_from: gridStart.value,
       p_to: addDays(gridEnd.value, -1)
     })
     return (data ?? []) as RateDay[]
   },
-  { watch: [cursor] }
+  { watch: [cursor, propertyId] }
 )
 
 async function refreshAll() {
@@ -268,7 +276,7 @@ async function blockSelection() {
   if (!runs.value.length) return
   const ok = await run('bloquear', () =>
     supabase.from('blocked_dates').insert(
-      runs.value.map(range => ({ start_date: range.start, end_date: range.end }))
+      runs.value.map(range => ({ property_id: propertyId.value, start_date: range.start, end_date: range.end }))
     )
   )
   if (ok) {
@@ -281,7 +289,7 @@ async function openSelection() {
   if (!runs.value.length) return
   const ok = await run('abrir', () =>
     supabase.from('open_periods').insert(
-      runs.value.map(range => ({ start_date: range.start, end_date: range.end }))
+      runs.value.map(range => ({ property_id: propertyId.value, start_date: range.start, end_date: range.end }))
     )
   )
   if (ok) {
@@ -297,7 +305,7 @@ async function openSelection() {
  */
 async function subtractRange(table: 'blocked_dates' | 'open_periods', start: string, end: string) {
   const { data: rows, error } = await supabase
-    .from(table).select('*').lt('start_date', end).gt('end_date', start)
+    .from(table).select('*').eq('property_id', propertyId.value).lt('start_date', end).gt('end_date', start)
   if (error) return { error }
 
   for (const row of (rows ?? []) as Array<Record<string, string>>) {
@@ -309,8 +317,8 @@ async function subtractRange(table: 'blocked_dates' | 'open_periods', start: str
       : { note: row.note ?? null }
 
     const leftovers = [
-      ...(row.start_date! < start ? [{ start_date: row.start_date!, end_date: start, ...label }] : []),
-      ...(row.end_date! > end ? [{ start_date: end, end_date: row.end_date!, ...label }] : [])
+      ...(row.start_date! < start ? [{ property_id: propertyId.value, start_date: row.start_date!, end_date: start, ...label }] : []),
+      ...(row.end_date! > end ? [{ property_id: propertyId.value, start_date: end, end_date: row.end_date!, ...label }] : [])
     ]
     if (leftovers.length) {
       const { error: insertError } = await supabase.from(table).insert(leftovers)
@@ -421,7 +429,7 @@ async function saveBulk() {
   // note on its own has nothing to annotate.
   if (cents === null && minNights === null) {
     const cleared = await run('restaurar la tarifa', () =>
-      supabase.from('rate_overrides').delete().in('day', days)
+      supabase.from('rate_overrides').delete().eq('property_id', propertyId.value).in('day', days)
     )
     if (cleared) {
       toast.add({ title: `${days.length} noche(s) vuelven a la tarifa`, color: 'success' })
@@ -432,6 +440,7 @@ async function saveBulk() {
   }
 
   const rows = days.map(day => ({
+    property_id: propertyId.value,
     day,
     nightly_cents: cents,
     min_nights: minNights,
@@ -439,7 +448,7 @@ async function saveBulk() {
   }))
 
   const ok = await run('guardar los precios', () =>
-    supabase.from('rate_overrides').upsert(rows, { onConflict: 'day' })
+    supabase.from('rate_overrides').upsert(rows, { onConflict: 'property_id,day' })
   )
   if (ok) {
     toast.add({ title: `${rows.length} noche(s) actualizadas`, color: 'success' })
@@ -452,7 +461,7 @@ async function resetPrice() {
   const days = selection.value
   if (!days.length) return
   const ok = await run('restaurar el precio', () =>
-    supabase.from('rate_overrides').delete().in('day', days)
+    supabase.from('rate_overrides').delete().eq('property_id', propertyId.value).in('day', days)
   )
   if (ok) {
     toast.add({ title: 'Vuelve a mandar la tarifa', color: 'success' })
@@ -776,6 +785,7 @@ async function createBlock() {
   }
   const ok = await run('bloquear', () =>
     supabase.from('blocked_dates').insert({
+      property_id: propertyId.value,
       start_date: newBlock.start_date,
       end_date: newBlock.end_date,
       reason: newBlock.reason || null
@@ -795,6 +805,7 @@ async function createOpenPeriod() {
   }
   const ok = await run('abrir', () =>
     supabase.from('open_periods').insert({
+      property_id: propertyId.value,
       start_date: newOpen.start_date,
       end_date: newOpen.end_date,
       note: newOpen.note || null

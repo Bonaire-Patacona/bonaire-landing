@@ -7,6 +7,7 @@ import type { NitroFetchOptions } from 'nitropack'
  */
 export function useAdminApi() {
   const supabase = useDb()
+  const route = useRoute()
 
   async function authFetch<T>(url: string, options: NitroFetchOptions<string> = {}): Promise<T> {
     const { data } = await supabase.auth.getSession()
@@ -16,7 +17,10 @@ export function useAdminApi() {
       ...options,
       headers: {
         ...(options.headers as Record<string, string> | undefined),
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(typeof route.query.property === 'string'
+          ? { 'X-Property-Id': route.query.property }
+          : {})
       }
     } as NitroFetchOptions<string>) as Promise<T>
   }

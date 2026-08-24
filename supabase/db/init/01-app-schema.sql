@@ -164,7 +164,7 @@ insert into public.cancellation_policies (code, name, builtin, tiers, sort_order
    '[{"days_before": 30, "refund_pct": 100}, {"days_before": 14, "refund_pct": 50}]'::jsonb, 30),
   ('non_refundable', 'No reembolsable', true,
    '[]'::jsonb, 40)
-on conflict (code) do nothing;
+on conflict do nothing;
 
 -- -----------------------------------------------------------------------------
 -- Seasonal rates
@@ -459,3 +459,46 @@ create trigger bookings_touch_updated_at before update on public.bookings
 drop trigger if exists app_settings_touch_updated_at on public.app_settings;
 create trigger app_settings_touch_updated_at before update on public.app_settings
   for each row execute function public.touch_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- Property roots are bootstrapped here (rather than in the later tenancy
+-- migration) because 02-availability builds a property-aware calendar view.
+-- The detailed constraints and compatibility RPCs are installed by 05.
+-- -----------------------------------------------------------------------------
+create table if not exists public.properties (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+  name text not null,
+  active boolean not null default true,
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists properties_one_default_idx
+  on public.properties (is_default) where is_default;
+insert into public.properties (slug, name, is_default)
+select 'bonaire-patacona', coalesce((select property_name from public.app_settings where id = 1), 'Bonaire Patacona'), true
+where not exists (select 1 from public.properties);
+create or replace function public.default_property_id()
+returns uuid language sql stable security definer set search_path = public as $$
+  select id from public.properties where active order by is_default desc, created_at limit 1
+$$;
+
+alter table public.app_settings drop constraint if exists app_settings_id_check;
+create sequence if not exists public.app_settings_id_seq;
+select setval('public.app_settings_id_seq', greatest(coalesce((select max(id) from public.app_settings), 1), 1));
+alter table public.app_settings alter column id set default nextval('public.app_settings_id_seq');
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'app_settings', 'rate_periods', 'rate_overrides', 'bookings', 'blocked_dates',
+    'open_periods', 'ical_feeds'
+  ] loop
+    execute format('alter table public.%I add column if not exists property_id uuid', t);
+    execute format('update public.%I set property_id = public.default_property_id() where property_id is null', t);
+    execute format('alter table public.%I alter column property_id set not null', t);
+  end loop;
+end $$;
+alter table public.app_settings alter column property_id set default public.default_property_id();

@@ -23,6 +23,7 @@ interface Feed {
 const supabase = useDb()
 const { authFetch } = useAdminApi()
 const toast = useToast()
+const { propertyId } = useAdminProperty()
 
 const busy = ref(false)
 const syncing = ref(false)
@@ -30,13 +31,15 @@ const showForm = ref(false)
 const form = reactive({ name: '', channel: 'airbnb', url: '', active: true })
 
 const { data: feeds, refresh, pending } = await useAsyncData<Feed[]>('admin-feeds', async () => {
-  const { data } = await supabase.from('ical_feeds').select('*').order('name')
+  if (!propertyId.value) return []
+  const { data } = await supabase.from('ical_feeds').select('*').eq('property_id', propertyId.value).order('name')
   return (data ?? []) as Feed[]
-})
+}, { watch: [propertyId] })
 
 const { data: overview, refresh: refreshOverview } = await useAsyncData(
   'admin-export-url',
-  () => authFetch<{ ical_export_url: string }>('/api/admin/overview')
+  () => authFetch<{ ical_export_url: string }>('/api/admin/overview'),
+  { watch: [propertyId] }
 )
 
 const exportUrl = computed(() => overview.value?.ical_export_url ?? '')
@@ -60,6 +63,7 @@ async function addFeed() {
   }
   busy.value = true
   const { error } = await supabase.from('ical_feeds').insert({
+    property_id: propertyId.value,
     name: form.name.trim(),
     channel: form.channel,
     url: form.url.trim(),

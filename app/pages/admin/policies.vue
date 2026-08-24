@@ -45,14 +45,6 @@ const { data: policies, refresh, pending } = await useAsyncData<Policy[]>(
   }
 )
 
-const { data: settings, refresh: refreshSettings } = await useAsyncData('admin-policies-settings', async () => {
-  const { data } = await supabase
-    .from('app_settings').select('cancellation_policy_code').eq('id', 1).single()
-  return data as { cancellation_policy_code: string } | null
-})
-
-const activeCode = computed(() => settings.value?.cancellation_policy_code ?? '')
-
 /** Human summary of a ladder, in the host's language rather than the guest's. */
 function describe(policy: Policy): string {
   if (!policy.tiers.length) return 'Sin reembolso en ningún caso'
@@ -132,29 +124,7 @@ async function save() {
   await refresh()
 }
 
-async function apply(policy: Policy) {
-  busy.value = true
-  const { error } = await supabase
-    .from('app_settings').update({ cancellation_policy_code: policy.code }).eq('id', 1)
-  busy.value = false
-
-  if (error) {
-    toast.add({ title: 'No se pudo aplicar', description: error.message, color: 'error' })
-    return
-  }
-  toast.add({
-    title: `Las reservas nuevas usarán «${policy.name}»`,
-    description: 'Las reservas ya hechas mantienen la política que aceptaron.',
-    color: 'success'
-  })
-  await refreshSettings()
-}
-
 async function remove(policy: Policy) {
-  if (policy.code === activeCode.value) {
-    toast.add({ title: 'No se puede borrar la política en uso', color: 'error' })
-    return
-  }
   if (!confirm(`¿Eliminar «${policy.name}»?`)) return
 
   const { error } = await supabase.from('cancellation_policies').delete().eq('id', policy.id)
@@ -165,13 +135,13 @@ async function remove(policy: Policy) {
   await refresh()
 }
 
-useSeoMeta({ title: 'Cancelaciones · Bonaire Patacona', robots: 'noindex, nofollow' })
+useSeoMeta({ title: 'Tipos de políticas · Administración', robots: 'noindex, nofollow' })
 </script>
 
 <template>
   <UDashboardPanel id="admin-policies">
     <template #header>
-      <UDashboardNavbar title="Cancelaciones">
+      <UDashboardNavbar title="Tipos de políticas">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -216,13 +186,6 @@ useSeoMeta({ title: 'Cancelaciones · Bonaire Patacona', robots: 'noindex, nofol
                     {{ policy.name }}
                   </h3>
                   <UBadge
-                    v-if="policy.code === activeCode"
-                    color="success"
-                    variant="subtle"
-                  >
-                    En uso
-                  </UBadge>
-                  <UBadge
                     v-if="policy.builtin"
                     color="neutral"
                     variant="subtle"
@@ -249,15 +212,6 @@ useSeoMeta({ title: 'Cancelaciones · Bonaire Patacona', robots: 'noindex, nofol
               </div>
 
               <div class="flex shrink-0 gap-2">
-                <UButton
-                  v-if="policy.code !== activeCode"
-                  size="sm"
-                  variant="subtle"
-                  :loading="busy"
-                  @click="apply(policy)"
-                >
-                  Aplicar
-                </UButton>
                 <UButton
                   icon="i-lucide-pencil"
                   size="sm"

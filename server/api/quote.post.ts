@@ -6,7 +6,7 @@
  */
 import { isIsoDate, today } from '~~/server/utils/dates'
 import { isRangeAvailable } from '~~/server/utils/availability'
-import { getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
+import { getCancellationPolicy, getProperty, getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
 import { QuoteError, buildQuote } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
@@ -15,13 +15,17 @@ export default defineEventHandler(async (event) => {
     check_out?: string
     adults?: number
     children?: number
+    property?: string
   }>(event)
 
   if (!isIsoDate(body?.check_in) || !isIsoDate(body?.check_out)) {
     throw createError({ statusCode: 400, statusMessage: 'check_in and check_out must be YYYY-MM-DD' })
   }
 
-  const [settings, periods, overrides] = await Promise.all([getSettings(), getRatePeriods(), getRateOverrides()])
+  const property = await getProperty(body.property)
+  const [settings, periods, overrides] = await Promise.all([
+    getSettings(property.id), getRatePeriods(property.id), getRateOverrides(property.id)
+  ])
 
   let quote
   try {
@@ -49,9 +53,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const [available, cancellation] = await Promise.all([
-    isRangeAvailable(quote.check_in, quote.check_out),
-    getCancellationPolicy()
+    isRangeAvailable(property.id, quote.check_in, quote.check_out),
+    getCancellationPolicy(property.id, false, quote.check_in)
   ])
 
-  return { ...quote, available, cancellation }
+  return { ...quote, property: { id: property.id, slug: property.slug, name: property.name }, available, cancellation }
 })

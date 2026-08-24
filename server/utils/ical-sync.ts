@@ -96,10 +96,11 @@ export async function syncFeed(feed: {
   return result
 }
 
-export async function syncAllFeeds(): Promise<FeedSyncResult[]> {
+export async function syncAllFeeds(propertyId?: string): Promise<FeedSyncResult[]> {
   const supabase = serviceClient()
-  const { data, error } = await supabase
-    .from('ical_feeds').select('id, name, channel, url').eq('active', true)
+  let query = supabase.from('ical_feeds').select('id, name, channel, url').eq('active', true)
+  if (propertyId) query = query.eq('property_id', propertyId)
+  const { data, error } = await query
   assertNoDbError(error, 'loading iCal feeds')
 
   const feeds = data ?? []
@@ -115,8 +116,8 @@ export async function syncAllFeeds(): Promise<FeedSyncResult[]> {
 }
 
 /** Absolute URL of the outbound feed, for display in the admin panel. */
-export async function exportFeedUrl(): Promise<string> {
-  const settings = await getSettings()
+export async function exportFeedUrl(propertyId?: string): Promise<string> {
+  const settings = await getSettings(propertyId)
   const base = useRuntimeConfig().public.siteUrl.replace(/\/$/, '')
   return `${base}/api/ical/${settings.ical_export_token}.ics`
 }

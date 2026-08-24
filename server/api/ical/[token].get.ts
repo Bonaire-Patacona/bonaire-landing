@@ -11,7 +11,8 @@
  */
 import { addDays, today } from '~~/server/utils/dates'
 import { getCalendarBlocks } from '~~/server/utils/availability'
-import { getSettings } from '~~/server/utils/supabase'
+import { assertNoDbError, serviceClient } from '~~/server/utils/supabase'
+import type { AppSettings } from '~~/server/utils/types'
 import { buildIcs, type IcsEvent } from '~~/server/utils/ical'
 
 export default defineEventHandler(async (event) => {
@@ -19,15 +20,18 @@ export default defineEventHandler(async (event) => {
   // literal suffix inside a route segment becomes part of the parameter *name*
   // ("token.ics"), not a separate match, so the param would never resolve.
   const token = getRouterParam(event, 'token')?.replace(/\.ics$/i, '')
-  const settings = await getSettings()
-
-  if (!token || token !== settings.ical_export_token) {
+  if (!token) {
     throw createError({ statusCode: 404, statusMessage: 'Calendar not found' })
   }
+  const { data, error } = await serviceClient().from('app_settings').select('*')
+    .eq('ical_export_token', token).maybeSingle()
+  assertNoDbError(error, 'loading calendar settings')
+  if (!data) throw createError({ statusCode: 404, statusMessage: 'Calendar not found' })
+  const settings = data as AppSettings
 
   const from = addDays(today(), -90)
   const to = addDays(today(), settings.booking_window_days)
-  const blocks = await getCalendarBlocks(from, to)
+  const blocks = await getCalendarBlocks(settings.property_id, from, to)
 
   const events: IcsEvent[] = blocks
     // Channels import our feed; echoing their own events back would create a
@@ -47,7 +51,7 @@ export default defineEventHandler(async (event) => {
   })
 
   setHeader(event, 'content-type', 'text/calendar; charset=utf-8')
-  setHeader(event, 'content-disposition', 'inline; filename="bonaire-patacona.ics"')
+  setHeader(event, 'content-disposition', `inline; filename="${settings.property_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.ics"`)
   setHeader(event, 'cache-control', 'public, max-age=300')
   return body
 })

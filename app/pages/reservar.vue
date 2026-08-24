@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const route = useRoute()
+const property = computed(() => typeof route.query.property === 'string' ? route.query.property : undefined)
 
 const initialCheckIn = computed(() => {
   const value = route.query.check_in
@@ -26,6 +27,7 @@ useSeoMeta({
   >
     <ClientOnly>
       <BookingWidget
+        :property="property"
         :initial-check-in="initialCheckIn"
         :initial-check-out="initialCheckOut"
       />

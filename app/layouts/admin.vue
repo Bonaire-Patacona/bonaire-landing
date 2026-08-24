@@ -7,29 +7,13 @@ const links = [[{
   icon: 'i-lucide-layout-dashboard',
   to: '/admin'
 }, {
-  label: 'Reservas',
-  icon: 'i-lucide-calendar-check',
-  to: '/admin/bookings'
+  label: 'Propiedades',
+  icon: 'i-lucide-house',
+  to: '/admin/properties'
 }, {
-  label: 'Calendario',
-  icon: 'i-lucide-calendar-days',
-  to: '/admin/calendar'
-}, {
-  label: 'Precios',
-  icon: 'i-lucide-euro',
-  to: '/admin/rates'
-}, {
-  label: 'Cancelaciones',
+  label: 'Tipos de políticas',
   icon: 'i-lucide-file-text',
   to: '/admin/policies'
-}, {
-  label: 'Canales',
-  icon: 'i-lucide-refresh-cw',
-  to: '/admin/channels'
-}, {
-  label: 'Ajustes',
-  icon: 'i-lucide-settings',
-  to: '/admin/settings'
 }], [{
   label: 'Ver la web',
   icon: 'i-lucide-external-link',

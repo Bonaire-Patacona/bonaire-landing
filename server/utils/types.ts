@@ -2,6 +2,7 @@ import type { CancellationPolicy } from './cancellation'
 
 export interface AppSettings {
   id: number
+  property_id: string
   property_name: string
   contact_email: string | null
   currency: string
@@ -48,6 +49,7 @@ export type BalanceChargeStatus
 
 export interface RatePeriod {
   id: string
+  property_id: string
   name: string
   start_date: string
   end_date: string
@@ -60,6 +62,7 @@ export interface RatePeriod {
 
 /** A price (and/or minimum stay) typed on one specific day of the calendar. */
 export interface RateOverride {
+  property_id: string
   day: string
   nightly_cents: number | null
   min_nights: number | null
@@ -103,6 +106,7 @@ export interface Quote {
 
 export interface BookingRow {
   id: string
+  property_id: string
   reference: string
   status: 'pending' | 'confirmed' | 'cancelled' | 'expired' | 'completed'
   source: string
@@ -147,4 +151,12 @@ export interface BookingRow {
   cancellation_reason: string | null
   created_at: string
   updated_at: string
+}
+
+export interface Property {
+  id: string
+  slug: string
+  name: string
+  active: boolean
+  is_default: boolean
 }

@@ -36,6 +36,8 @@ export default defineNuxtConfig({
     supabaseServiceKey: process.env.SERVICE_ROLE_KEY || '',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    openaiApiKey: process.env.OPENAI_API_KEY || '',
+    openaiTranslationModel: process.env.OPENAI_TRANSLATION_MODEL || 'gpt-5-mini',
     icalSyncEnabled: process.env.ICAL_SYNC_ENABLED || 'true',
     cronSecret: process.env.CRON_SECRET || '',
     public: {

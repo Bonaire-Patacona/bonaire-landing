@@ -58,6 +58,37 @@ docs/DEPLOY.md           Deployment guide
 
 ## How the booking engine works
 
+### Multiple properties
+
+Inventory is tenant-scoped by `properties.id`. Settings, rates, day overrides,
+bookings, manual/open periods and iCal feeds all carry a required `property_id`;
+the database overlap constraint and availability RPCs include it too. The
+migration adopts existing data into `bonaire-patacona`, marked as the default,
+so old links keep working.
+
+Public booking endpoints accept a property slug:
+
+```text
+GET  /api/properties
+GET  /api/availability?property=second-apartment
+POST /api/quote     { "property": "second-apartment", ... }
+POST /api/bookings  { "property": "second-apartment", ... }
+GET  /reservar?property=second-apartment
+```
+
+Admins can list and create inventory roots with `GET/POST
+/api/admin/properties`. The general menu contains the property catalogue and
+reusable cancellation-policy types. Opening a property gives access to its
+commercial content, publication state, photographs, features, reviews, default
+and seasonal policy assignments, settings, rates, calendar, booking sources and
+reservations. Creating one clones the default commercial settings but generates
+its own iCal token; rates, availability, channels and bookings start empty.
+
+Published properties have a generated public page at `/allotjament/:slug`. Its
+gallery, description, amenities, capacity and reviews come from the database,
+and its booking action keeps the property slug through availability, quoting,
+checkout and payment.
+
 1. `/api/availability` publishes which nights are free and what each costs.
 2. `/api/quote` prices a candidate stay and validates it against the house rules
    (minimum stay, notice, party size).

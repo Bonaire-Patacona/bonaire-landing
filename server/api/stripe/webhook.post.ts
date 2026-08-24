@@ -113,7 +113,7 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
     patch.card_saved_at = new Date().toISOString()
   }
 
-  const settings = await getSettings()
+  const settings = await getSettings(booking.property_id)
   const schedule = planBalanceCharge({
     outstanding_cents: booking.total_cents - amountPaid,
     balance_due_date: booking.balance_due_date,

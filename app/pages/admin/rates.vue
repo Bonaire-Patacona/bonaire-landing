@@ -20,6 +20,7 @@ interface RatePeriod {
 
 const supabase = useDb()
 const toast = useToast()
+const { propertyId } = useAdminProperty()
 
 const busy = ref(false)
 const showForm = ref(false)
@@ -37,14 +38,17 @@ const form = reactive({
 })
 
 const { data: periods, refresh, pending } = await useAsyncData<RatePeriod[]>('admin-rates', async () => {
-  const { data } = await supabase.from('rate_periods').select('*').order('start_date')
+  if (!propertyId.value) return []
+  const { data } = await supabase.from('rate_periods').select('*')
+    .eq('property_id', propertyId.value).order('start_date')
   return (data ?? []) as RatePeriod[]
-})
+}, { watch: [propertyId] })
 
 const { data: settings } = await useAsyncData('admin-rates-settings', async () => {
-  const { data } = await supabase.from('app_settings').select('*').eq('id', 1).single()
+  if (!propertyId.value) return null
+  const { data } = await supabase.from('app_settings').select('*').eq('property_id', propertyId.value).single()
   return data as { currency: string, base_nightly_cents: number, min_nights: number } | null
-})
+}, { watch: [propertyId] })
 
 function openCreate() {
   editing.value = null
@@ -84,6 +88,7 @@ async function save() {
 
   busy.value = true
   const payload = {
+    property_id: propertyId.value,
     name: form.name.trim(),
     start_date: form.start_date,
     end_date: form.end_date,

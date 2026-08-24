@@ -4,7 +4,7 @@ import { addDays, today } from './dates'
 import { NON_REFUNDABLE, normaliseTiers } from './cancellation'
 import { overridesByDay } from './pricing'
 import type { CancellationPolicy } from './cancellation'
-import type { AppSettings, RateOverride, RateOverrideMap, RatePeriod } from './types'
+import type { AppSettings, Property, RateOverride, RateOverrideMap, RatePeriod } from './types'
 
 let client: SupabaseClient | null = null
 
@@ -49,32 +49,62 @@ export function assertNoDbError(error: { message: string, code?: string } | null
 // several date ranges does not hammer PostgREST.
 // -----------------------------------------------------------------------------
 const CACHE_MS = 15_000
-let settingsCache: { at: number, value: AppSettings } | null = null
-let ratesCache: { at: number, value: RatePeriod[] } | null = null
-let overridesCache: { at: number, value: RateOverrideMap } | null = null
-let policyCache: { at: number, value: CancellationPolicy } | null = null
+const settingsCache = new Map<string, { at: number, value: AppSettings }>()
+const ratesCache = new Map<string, { at: number, value: RatePeriod[] }>()
+const overridesCache = new Map<string, { at: number, value: RateOverrideMap }>()
+const policyCache = new Map<string, { at: number, value: CancellationPolicy }>()
 
-export async function getSettings(force = false): Promise<AppSettings> {
-  if (!force && settingsCache && Date.now() - settingsCache.at < CACHE_MS) {
-    return settingsCache.value
+/** Resolve a public slug (or id used by the admin) to one active property. */
+export async function getProperty(selector?: string | null): Promise<Property> {
+  let query = serviceClient().from('properties').select('*').eq('active', true)
+  if (selector) query = selector.includes('-') && selector.length === 36
+    ? query.eq('id', selector)
+    : query.eq('slug', selector)
+  else query = query.eq('is_default', true)
+
+  let { data, error } = await query.maybeSingle()
+  // A database imported before a default was designated still has a stable
+  // fallback: the oldest active property.
+  if (!data && !selector && !error) {
+    const fallback = await serviceClient().from('properties').select('*').eq('active', true)
+      .order('created_at').limit(1).maybeSingle()
+    data = fallback.data
+    error = fallback.error
   }
-  const { data, error } = await serviceClient()
-    .from('app_settings').select('*').eq('id', 1).single()
-  assertNoDbError(error, 'loading settings')
-  settingsCache = { at: Date.now(), value: data as AppSettings }
-  return settingsCache.value
+  assertNoDbError(error, 'loading property')
+  if (!data) throw createError({ statusCode: 404, statusMessage: 'Property not found' })
+  return data as Property
 }
 
-export async function getRatePeriods(force = false): Promise<RatePeriod[]> {
-  if (!force && ratesCache && Date.now() - ratesCache.at < CACHE_MS) {
-    return ratesCache.value
+export async function getSettings(propertyOrForce?: string | boolean, force = false): Promise<AppSettings> {
+  if (typeof propertyOrForce === 'boolean') force = propertyOrForce
+  const id = typeof propertyOrForce === 'string' ? propertyOrForce : (await getProperty()).id
+  const cached = settingsCache.get(id)
+  if (!force && cached && Date.now() - cached.at < CACHE_MS) {
+    return cached.value
   }
   const { data, error } = await serviceClient()
-    .from('rate_periods').select('*').eq('active', true)
+    .from('app_settings').select('*').eq('property_id', id).single()
+  assertNoDbError(error, 'loading settings')
+  const value = data as AppSettings
+  settingsCache.set(id, { at: Date.now(), value })
+  return value
+}
+
+export async function getRatePeriods(propertyOrForce?: string | boolean, force = false): Promise<RatePeriod[]> {
+  if (typeof propertyOrForce === 'boolean') force = propertyOrForce
+  const id = typeof propertyOrForce === 'string' ? propertyOrForce : (await getProperty()).id
+  const cached = ratesCache.get(id)
+  if (!force && cached && Date.now() - cached.at < CACHE_MS) {
+    return cached.value
+  }
+  const { data, error } = await serviceClient()
+    .from('rate_periods').select('*').eq('property_id', id).eq('active', true)
     .order('priority', { ascending: false })
   assertNoDbError(error, 'loading rate periods')
-  ratesCache = { at: Date.now(), value: (data ?? []) as RatePeriod[] }
-  return ratesCache.value
+  const value = (data ?? []) as RatePeriod[]
+  ratesCache.set(id, { at: Date.now(), value })
+  return value
 }
 
 /**
@@ -86,14 +116,18 @@ const OVERRIDE_LOOKBEHIND_DAYS = 365
 const OVERRIDE_LOOKAHEAD_DAYS = 1095
 const OVERRIDE_LIMIT = 5000
 
-export async function getRateOverrides(force = false): Promise<RateOverrideMap> {
-  if (!force && overridesCache && Date.now() - overridesCache.at < CACHE_MS) {
-    return overridesCache.value
+export async function getRateOverrides(propertyOrForce?: string | boolean, force = false): Promise<RateOverrideMap> {
+  if (typeof propertyOrForce === 'boolean') force = propertyOrForce
+  const id = typeof propertyOrForce === 'string' ? propertyOrForce : (await getProperty()).id
+  const cached = overridesCache.get(id)
+  if (!force && cached && Date.now() - cached.at < CACHE_MS) {
+    return cached.value
   }
   const now = today()
   const { data, error } = await serviceClient()
     .from('rate_overrides')
     .select('*')
+    .eq('property_id', id)
     .gte('day', addDays(now, -OVERRIDE_LOOKBEHIND_DAYS))
     .lte('day', addDays(now, OVERRIDE_LOOKAHEAD_DAYS))
     .order('day')
@@ -105,8 +139,9 @@ export async function getRateOverrides(force = false): Promise<RateOverrideMap> 
     console.warn('[pricing] hit the rate override limit; some nights will fall back to the rate card')
   }
 
-  overridesCache = { at: Date.now(), value: overridesByDay(rows) }
-  return overridesCache.value
+  const value = overridesByDay(rows)
+  overridesCache.set(id, { at: Date.now(), value })
+  return value
 }
 
 /**
@@ -114,16 +149,39 @@ export async function getRateOverrides(force = false): Promise<RateOverrideMap> 
  * conditions from app_settings appended. A missing or deleted policy falls back
  * to no refund rather than to a generous default: the safe side of a mistake.
  */
-export async function getCancellationPolicy(force = false): Promise<CancellationPolicy> {
-  if (!force && policyCache && Date.now() - policyCache.at < CACHE_MS) {
-    return policyCache.value
+export async function getCancellationPolicy(
+  propertyOrForce?: string | boolean,
+  force = false,
+  stayDate?: string
+): Promise<CancellationPolicy> {
+  if (typeof propertyOrForce === 'boolean') force = propertyOrForce
+  const id = typeof propertyOrForce === 'string' ? propertyOrForce : (await getProperty()).id
+  const cacheKey = `${id}:${stayDate ?? 'default'}`
+  const cached = policyCache.get(cacheKey)
+  if (!force && cached && Date.now() - cached.at < CACHE_MS) {
+    return cached.value
   }
 
-  const settings = await getSettings(force)
+  const settings = await getSettings(id, force)
+  let policyCode = settings.cancellation_policy_code
+  if (stayDate) {
+    const { data: assignment, error: assignmentError } = await serviceClient()
+      .from('property_policy_periods')
+      .select('cancellation_policies(code)')
+      .eq('property_id', id)
+      .lte('start_date', stayDate)
+      .gte('end_date', stayDate)
+      .order('priority', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    assertNoDbError(assignmentError, 'loading the seasonal cancellation policy')
+    const related = assignment?.cancellation_policies as unknown as { code?: string } | null
+    if (related?.code) policyCode = related.code
+  }
   const { data, error } = await serviceClient()
     .from('cancellation_policies')
     .select('*')
-    .eq('code', settings.cancellation_policy_code)
+    .eq('code', policyCode)
     .maybeSingle()
   assertNoDbError(error, 'loading the cancellation policy')
 
@@ -131,7 +189,7 @@ export async function getCancellationPolicy(force = false): Promise<Cancellation
   const addendum = settings.cancellation_policy.trim()
   const base = row ? { code: row.code, name: row.name, notes: row.notes } : NON_REFUNDABLE
 
-  policyCache = {
+  const value = {
     at: Date.now(),
     value: {
       code: base.code,
@@ -140,14 +198,24 @@ export async function getCancellationPolicy(force = false): Promise<Cancellation
       notes: [base.notes?.trim(), addendum].filter(Boolean).join('\n\n')
     }
   }
-  return policyCache.value
+  policyCache.set(cacheKey, value)
+  return value.value
 }
 
-export function invalidatePricingCache(): void {
-  settingsCache = null
-  ratesCache = null
-  overridesCache = null
-  policyCache = null
+export function invalidatePricingCache(propertyId?: string): void {
+  if (propertyId) {
+    settingsCache.delete(propertyId)
+    ratesCache.delete(propertyId)
+    overridesCache.delete(propertyId)
+    for (const key of policyCache.keys()) {
+      if (key.startsWith(`${propertyId}:`)) policyCache.delete(key)
+    }
+  } else {
+    settingsCache.clear()
+    ratesCache.clear()
+    overridesCache.clear()
+    policyCache.clear()
+  }
 }
 
 /**
@@ -174,6 +242,11 @@ export async function requireAdmin(event: H3Event): Promise<{ id: string, email:
   }
 
   return { id: userData.user.id, email: userData.user.email ?? profile.email ?? '' }
+}
+
+/** Property selected in the admin sidebar, falling back to the default. */
+export async function getAdminProperty(event: H3Event): Promise<Property> {
+  return getProperty(getHeader(event, 'x-property-id') ?? undefined)
 }
 
 /** Reads the access token from the Authorization header or the Supabase cookie. */

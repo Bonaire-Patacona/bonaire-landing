@@ -7,7 +7,7 @@
  */
 import { isIsoDate } from '~~/server/utils/dates'
 import { isRangeAvailable } from '~~/server/utils/availability'
-import { assertNoDbError, getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getAdminProperty, getCancellationPolicy, getProperty, getRateOverrides, getRatePeriods, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
 import { buildQuote, QuoteError } from '~~/server/utils/pricing'
 import { generateReference } from '~~/server/utils/reference'
 
@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
   const body = await readBody<{
+    property?: string
     check_in?: string
     check_out?: string
     adults?: number
@@ -34,12 +35,14 @@ export default defineEventHandler(async (event) => {
   if (!(body.guest_name ?? '').trim()) {
     throw createError({ statusCode: 400, statusMessage: 'A guest name is required' })
   }
-  if (!(await isRangeAvailable(body.check_in, body.check_out))) {
+  const property = body.property ? await getProperty(body.property) : await getAdminProperty(event)
+  if (!(await isRangeAvailable(property.id, body.check_in, body.check_out))) {
     throw createError({ statusCode: 409, statusMessage: 'Those dates are already taken' })
   }
 
   const [settings, periods, overrides, cancellation] = await Promise.all([
-    getSettings(), getRatePeriods(), getRateOverrides(), getCancellationPolicy()
+    getSettings(property.id), getRatePeriods(property.id), getRateOverrides(property.id),
+    getCancellationPolicy(property.id, false, body.check_in)
   ])
 
   // The host may override the price; otherwise fall back to the rate card.
@@ -66,6 +69,7 @@ export default defineEventHandler(async (event) => {
   const paid = Math.min(total, Math.max(0, Math.round(body.amount_paid_cents ?? 0)))
 
   const { data, error } = await serviceClient().from('bookings').insert({
+    property_id: property.id,
     reference: await generateReference(),
     status: 'confirmed',
     source: body.source ?? 'manual',

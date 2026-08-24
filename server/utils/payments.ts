@@ -68,9 +68,7 @@ export interface BalanceRunResult {
  */
 export async function chargeDueBalances(): Promise<BalanceRunResult> {
   const result: BalanceRunResult = { charged: 0, failed: 0, skipped: 0 }
-  const settings = await getSettings(true)
-
-  if (!settings.auto_charge_balance || !isStripeConfigured()) return result
+  if (!isStripeConfigured()) return result
 
   const supabase = serviceClient()
   const { data: due, error } = await supabase
@@ -85,6 +83,11 @@ export async function chargeDueBalances(): Promise<BalanceRunResult> {
   assertNoDbError(error, 'loading balances due')
 
   for (const booking of (due ?? []) as BookingRow[]) {
+    const settings = await getSettings(booking.property_id)
+    if (!settings.auto_charge_balance) {
+      result.skipped++
+      continue
+    }
     const claimed = await claim(booking)
     if (!claimed) {
       result.skipped++

@@ -1,6 +1,7 @@
 import { assertNoDbError, serviceClient } from './supabase'
 
 export interface CalendarBlock {
+  property_id: string
   source_id: string
   kind: 'booking' | 'blocked' | 'external'
   channel: string
@@ -15,11 +16,13 @@ export interface CalendarBlock {
  * read-then-write race between two guests picking the same week.
  */
 export async function isRangeAvailable(
+  propertyId: string,
   checkIn: string,
   checkOut: string,
   excludeBookingId?: string
 ): Promise<boolean> {
   const { data, error } = await serviceClient().rpc('is_range_available', {
+    p_property_id: propertyId,
     p_check_in: checkIn,
     p_check_out: checkOut,
     p_exclude_booking: excludeBookingId ?? null
@@ -34,8 +37,9 @@ export async function isRangeAvailable(
  * (app_settings.availability_mode + public.open_periods), and the back office
  * is allowed to book straight over it.
  */
-export async function isRangeOpen(from: string, to: string): Promise<boolean> {
+export async function isRangeOpen(propertyId: string, from: string, to: string): Promise<boolean> {
   const { data, error } = await serviceClient().rpc('is_range_open', {
+    p_property_id: propertyId,
     p_from: from,
     p_to: to
   })
@@ -43,8 +47,9 @@ export async function isRangeOpen(from: string, to: string): Promise<boolean> {
   return data === true
 }
 
-export async function getUnavailableDays(from: string, to: string): Promise<string[]> {
+export async function getUnavailableDays(propertyId: string, from: string, to: string): Promise<string[]> {
   const { data, error } = await serviceClient().rpc('unavailable_days', {
+    p_property_id: propertyId,
     p_from: from,
     p_to: to
   })
@@ -52,10 +57,11 @@ export async function getUnavailableDays(from: string, to: string): Promise<stri
   return ((data ?? []) as Array<{ day: string }>).map(row => row.day)
 }
 
-export async function getCalendarBlocks(from: string, to: string): Promise<CalendarBlock[]> {
+export async function getCalendarBlocks(propertyId: string, from: string, to: string): Promise<CalendarBlock[]> {
   const { data, error } = await serviceClient()
     .from('calendar_blocks')
     .select('*')
+    .eq('property_id', propertyId)
     .lt('start_date', to)
     .gt('end_date', from)
     .order('start_date')

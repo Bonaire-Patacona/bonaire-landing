@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Booking not found' })
   }
 
-  const settings = await getSettings()
+  const settings = await getSettings(data.property_id)
   const email = String(getQuery(event).email ?? '').trim().toLowerCase()
   const verified = Boolean(email) && email === data.guest_email
 
