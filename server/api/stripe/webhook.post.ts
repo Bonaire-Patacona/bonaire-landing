@@ -8,12 +8,14 @@
  * Configure in Stripe -> Developers -> Webhooks with these events:
  *   checkout.session.completed
  *   checkout.session.expired
+ *   payment_intent.succeeded
  *   payment_intent.payment_failed
  *   charge.refunded
  */
 import type Stripe from 'stripe'
-import { assertNoDbError, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getSettings, serviceClient } from '~~/server/utils/supabase'
 import { getStripe } from '~~/server/utils/stripe'
+import { planBalanceCharge } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -56,6 +58,9 @@ export default defineEventHandler(async (event) => {
     case 'checkout.session.expired':
       await onCheckoutExpired(stripeEvent.data.object)
       break
+    case 'payment_intent.succeeded':
+      await onAutoBalanceSucceeded(stripeEvent.data.object)
+      break
     case 'payment_intent.payment_failed':
       await onPaymentFailed(stripeEvent.data.object)
       break
@@ -91,12 +96,32 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (!booking) return
 
   const amountPaid = booking.amount_paid_cents + amount
+  const savedCard = await savedCardOf(paymentIntentId)
+  const customerId = (typeof session.customer === 'string' ? session.customer : null)
+    ?? booking.stripe_customer_id
+
   const patch: Record<string, unknown> = {
     amount_paid_cents: amountPaid,
     balance_cents: Math.max(0, booking.total_cents - amountPaid),
     stripe_payment_intent_id: paymentIntentId,
-    stripe_customer_id: typeof session.customer === 'string' ? session.customer : null
+    stripe_customer_id: customerId
   }
+
+  // A card kept on file is what makes the unattended balance charge possible.
+  if (savedCard) {
+    patch.stripe_payment_method_id = savedCard
+    patch.card_saved_at = new Date().toISOString()
+  }
+
+  const settings = await getSettings()
+  const schedule = planBalanceCharge({
+    outstanding_cents: booking.total_cents - amountPaid,
+    balance_due_date: booking.balance_due_date,
+    has_card_on_file: Boolean(customerId && (savedCard ?? booking.stripe_payment_method_id)),
+    auto_charge_balance: settings.auto_charge_balance
+  })
+  patch.balance_charge_status = schedule.status
+  patch.balance_next_attempt_at = schedule.next_attempt_at
 
   // A deposit payment is what turns a hold into a real reservation.
   if (booking.status === 'pending' || booking.status === 'expired') {
@@ -135,6 +160,70 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
       raw: session as unknown as Record<string, unknown>
     })
   }
+}
+
+/**
+ * The payment method behind a PaymentIntent, but only when that intent actually
+ * stored it for later use. Every card intent has a payment method attached;
+ * charging one that was not saved off-session would be declined.
+ */
+async function savedCardOf(paymentIntentId: string | null): Promise<string | null> {
+  if (!paymentIntentId) return null
+  try {
+    const intent = await getStripe().paymentIntents.retrieve(paymentIntentId)
+    if (intent.setup_future_usage !== 'off_session') return null
+    return typeof intent.payment_method === 'string'
+      ? intent.payment_method
+      : intent.payment_method?.id ?? null
+  } catch (error) {
+    console.error('[stripe] could not read the saved card:', error)
+    return null
+  }
+}
+
+/**
+ * An automatic balance charge went through. Those never pass through Checkout,
+ * so this is the only event that posts them to the ledger — hence the metadata
+ * guard, which keeps deposit intents (already handled above) out.
+ */
+async function onAutoBalanceSucceeded(intent: Stripe.PaymentIntent) {
+  const bookingId = bookingIdOf(intent)
+  if (!bookingId || intent.metadata?.source !== 'auto_balance') return
+
+  const supabase = serviceClient()
+  const { data: booking, error } = await supabase
+    .from('bookings').select('*').eq('id', bookingId).single()
+  assertNoDbError(error, 'loading the booking of an automatic charge')
+  if (!booking) return
+
+  const amount = intent.amount_received ?? intent.amount
+  const amountPaid = booking.amount_paid_cents + amount
+
+  const patch: Record<string, unknown> = {
+    amount_paid_cents: amountPaid,
+    balance_cents: Math.max(0, booking.total_cents - amountPaid),
+    balance_last_error: null
+  }
+  // Only a charge that clears the booking closes the collection off; a partial
+  // one leaves whatever the payments task decided to do next in place.
+  if (amountPaid >= booking.total_cents) {
+    patch.balance_charge_status = 'succeeded'
+    patch.balance_next_attempt_at = null
+    patch.balance_payment_url = null
+  }
+
+  await supabase.from('bookings').update(patch).eq('id', bookingId)
+
+  await supabase.from('booking_payments').insert({
+    booking_id: bookingId,
+    kind: 'balance',
+    amount_cents: amount,
+    currency: intent.currency.toUpperCase(),
+    status: 'succeeded',
+    stripe_payment_intent_id: intent.id,
+    stripe_charge_id: typeof intent.latest_charge === 'string' ? intent.latest_charge : null,
+    raw: intent as unknown as Record<string, unknown>
+  })
 }
 
 async function onCheckoutExpired(session: Stripe.Checkout.Session) {

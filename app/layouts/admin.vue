@@ -19,6 +19,10 @@ const links = [[{
   icon: 'i-lucide-euro',
   to: '/admin/rates'
 }, {
+  label: 'Cancelaciones',
+  icon: 'i-lucide-file-text',
+  to: '/admin/policies'
+}, {
   label: 'Canales',
   icon: 'i-lucide-refresh-cw',
   to: '/admin/channels'

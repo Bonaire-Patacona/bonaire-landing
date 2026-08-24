@@ -144,7 +144,7 @@ async function submit() {
       color: 'error',
       icon: 'i-lucide-circle-alert'
     })
-    if (code === 'unavailable') await loadAvailability()
+    if (code === 'unavailable' || code === 'closed') await loadAvailability()
   } finally {
     submitting.value = false
   }
@@ -324,12 +324,7 @@ async function submit() {
             </p>
           </div>
 
-          <p
-            v-if="quote.cancellation_policy"
-            class="text-xs text-muted"
-          >
-            {{ quote.cancellation_policy }}
-          </p>
+          <BookingCancellationTerms :policy="quote.cancellation" />
 
           <UButton
             v-if="!showGuestForm"

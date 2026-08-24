@@ -21,6 +21,13 @@ interface Booking {
   balance_cents: number
   balance_due_date: string | null
   balance_payment_url: string | null
+  balance_charge_status: string
+  balance_next_attempt_at: string | null
+  balance_last_error: string | null
+  stripe_payment_method_id: string | null
+  security_deposit_cents: number
+  cancellation_policy: { code?: string, name?: string } | null
+  refunded_cents: number
   created_at: string
 }
 
@@ -33,6 +40,7 @@ const search = ref('')
 const selected = ref<Booking | null>(null)
 const busy = ref(false)
 const showManual = ref(false)
+const showDamages = ref(false)
 
 const statusOptions = [
   { label: 'Todas', value: 'all' },
@@ -71,6 +79,46 @@ const statusColor = (status: string) => ({
   cancelled: 'error',
   expired: 'neutral'
 }[status] ?? 'neutral') as 'success' | 'warning' | 'error' | 'neutral'
+
+const { data: settings } = await useAsyncData('admin-bookings-settings', async () => {
+  const { data } = await supabase
+    .from('app_settings').select('security_deposit_mode').eq('id', 1).single()
+  return data as { security_deposit_mode: 'none' | 'card_on_file' } | null
+})
+
+/** A card is only on file when the guest paid through Stripe with one saved. */
+const canChargeCard = (booking: Booking) =>
+  settings.value?.security_deposit_mode === 'card_on_file' && Boolean(booking.stripe_payment_method_id)
+
+// --- automatic balance collection -------------------------------------------
+const chargeColor = (status: string) => ({
+  scheduled: 'info',
+  processing: 'info',
+  succeeded: 'success',
+  requires_action: 'warning',
+  failed: 'error'
+}[status] ?? 'neutral') as 'success' | 'warning' | 'error' | 'info' | 'neutral'
+
+function chargeLabel(booking: Booking): string {
+  switch (booking.balance_charge_status) {
+    case 'scheduled':
+      return booking.balance_next_attempt_at
+        ? `Se cobrará solo el ${formatDate(booking.balance_next_attempt_at.slice(0, 10))}`
+        : 'Cobro automático programado'
+    case 'processing':
+      return 'Cobrándose ahora'
+    case 'succeeded':
+      return 'Cobrado con la tarjeta guardada'
+    case 'requires_action':
+      return 'El banco pide autenticación: hay que enviar el enlace de pago'
+    case 'failed':
+      return 'El cobro automático no salió: hay que enviar el enlace de pago'
+    case 'manual':
+      return 'Sin tarjeta guardada: el resto se cobra a mano'
+    default:
+      return 'Nada pendiente'
+  }
+}
 
 // --- manual booking ---------------------------------------------------------
 const manual = reactive({
@@ -134,9 +182,82 @@ async function createBalanceLink(booking: Booking) {
   }
 }
 
-async function cancelBooking(booking: Booking, refund: boolean) {
-  if (!confirm(refund ? '¿Cancelar y reembolsar lo cobrado?' : '¿Cancelar la reserva sin reembolso?')) return
+// --- damage deposit ----------------------------------------------------------
+const damages = reactive({ amount: '', reason: '' })
+
+function openDamages(booking: Booking) {
+  damages.amount = String(fromCents(booking.security_deposit_cents || 0))
+  damages.reason = ''
+  showDamages.value = true
+}
+
+async function chargeDamages(booking: Booking) {
+  const amountCents = toCents(damages.amount)
+  if (amountCents <= 0) {
+    toast.add({ title: 'El importe tiene que ser mayor que cero', color: 'error' })
+    return
+  }
+  if (!confirm(`¿Cobrar ${formatMoney(amountCents, booking.currency)} a la tarjeta guardada?`)) return
+
   busy.value = true
+  try {
+    await authFetch(`/api/admin/bookings/${booking.id}/security-deposit`, {
+      method: 'POST',
+      body: { amount_cents: amountCents, reason: damages.reason }
+    })
+    toast.add({ title: 'Cargo realizado', color: 'success' })
+    showDamages.value = false
+    await refresh()
+  } catch (error) {
+    toast.add({
+      title: 'La tarjeta rechazó el cargo',
+      description: (error as { data?: { statusMessage?: string } }).data?.statusMessage,
+      color: 'error'
+    })
+  } finally {
+    busy.value = false
+  }
+}
+
+interface RefundPreview {
+  policy: { code: string, name: string }
+  amount_paid_cents: number
+  currency: string
+  refund_pct: number
+  refund_cents: number
+  days_before: number
+}
+
+/**
+ * Asks the server what the policy on the booking says before anything is
+ * refunded, so the host confirms a number rather than a guess.
+ */
+async function cancelBooking(booking: Booking, refund: boolean) {
+  busy.value = true
+  let question = '¿Cancelar la reserva sin reembolso?'
+
+  try {
+    if (refund) {
+      const preview = await authFetch<RefundPreview>(`/api/admin/bookings/${booking.id}/cancel`, {
+        method: 'POST',
+        body: { dry_run: true }
+      })
+      question = preview.refund_cents > 0
+        ? `La política «${preview.policy.name}» devuelve el ${preview.refund_pct}% `
+        + `(${formatMoney(preview.refund_cents, preview.currency)} de `
+        + `${formatMoney(preview.amount_paid_cents, preview.currency)}). ¿Cancelar y reembolsar?`
+        : `La política «${preview.policy.name}» no da derecho a reembolso a `
+          + `${preview.days_before} día(s) de la entrada. ¿Cancelar igualmente sin devolver nada?`
+    }
+  } catch {
+    question = '¿Cancelar y reembolsar según la política?'
+  }
+
+  if (!confirm(question)) {
+    busy.value = false
+    return
+  }
+
   try {
     await authFetch(`/api/admin/bookings/${booking.id}/cancel`, {
       method: 'POST',
@@ -362,6 +483,18 @@ useSeoMeta({ title: 'Reservas · Bonaire Patacona', robots: 'noindex, nofollow' 
                 </dt>
                 <dd>{{ formatMoney(selected.amount_paid_cents, selected.currency) }}</dd>
               </div>
+              <div v-if="selected.refunded_cents > 0">
+                <dt class="text-muted text-xs">
+                  Reembolsado
+                </dt>
+                <dd>{{ formatMoney(selected.refunded_cents, selected.currency) }}</dd>
+              </div>
+              <div v-if="selected.cancellation_policy?.name">
+                <dt class="text-muted text-xs">
+                  Cancelación
+                </dt>
+                <dd>{{ selected.cancellation_policy.name }}</dd>
+              </div>
             </dl>
 
             <UAlert
@@ -370,6 +503,15 @@ useSeoMeta({ title: 'Reservas · Bonaire Patacona', robots: 'noindex, nofollow' 
               variant="subtle"
               icon="i-lucide-message-square"
               :description="selected.notes"
+            />
+
+            <UAlert
+              v-if="selected.total_cents > selected.amount_paid_cents"
+              :color="chargeColor(selected.balance_charge_status)"
+              variant="subtle"
+              icon="i-lucide-credit-card"
+              :title="chargeLabel(selected)"
+              :description="selected.balance_last_error ?? undefined"
             />
 
             <UAlert
@@ -392,6 +534,17 @@ useSeoMeta({ title: 'Reservas · Bonaire Patacona', robots: 'noindex, nofollow' 
                 @click="createBalanceLink(selected)"
               >
                 Crear enlace para el importe pendiente
+              </UButton>
+              <UButton
+                v-if="canChargeCard(selected)"
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-shield"
+                :loading="busy"
+                block
+                @click="openDamages(selected)"
+              >
+                Cobrar daños a la tarjeta guardada
               </UButton>
               <UButton
                 v-if="!['cancelled', 'expired'].includes(selected.status)"
@@ -419,6 +572,56 @@ useSeoMeta({ title: 'Reservas · Bonaire Patacona', robots: 'noindex, nofollow' 
           </div>
         </template>
       </USlideover>
+
+      <!-- Damage deposit -->
+      <UModal
+        v-model:open="showDamages"
+        title="Cobrar daños"
+        description="Se cobra a la tarjeta con la que se pagó la reserva. No hay ningún importe retenido."
+      >
+        <template #body>
+          <div class="flex flex-col gap-3">
+            <UFormField
+              label="Importe (€)"
+              required
+            >
+              <UInput
+                v-model="damages.amount"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              label="Concepto"
+              hint="Aparece en el extracto del huésped"
+            >
+              <UInput
+                v-model="damages.reason"
+                placeholder="Rotura de la mesa de la terraza"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </template>
+        <template #footer>
+          <div class="flex justify-end gap-2 w-full">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              @click="showDamages = false"
+            >
+              Cancelar
+            </UButton>
+            <UButton
+              v-if="selected"
+              color="error"
+              :loading="busy"
+              @click="chargeDamages(selected)"
+            >
+              Cobrar
+            </UButton>
+          </div>
+        </template>
+      </UModal>
 
       <!-- Manual booking -->
       <UModal

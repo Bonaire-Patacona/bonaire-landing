@@ -131,6 +131,20 @@
     "payNow": "Da pagare ora",
     "payLater": "Saldo entro il {date}",
     "securityDeposit": "Cauzione rimborsabile di {amount} (non addebitata ora).",
+    "cancellation": {
+      "title": "Politica di cancellazione",
+      "tier": "Rimborso del {pct}% se cancelli almeno {days} giorni prima dell'arrivo",
+      "tierSameDay": "Rimborso del {pct}% se cancelli prima dell'arrivo",
+      "none": "Nessun rimborso una volta confermata la prenotazione",
+      "refundNow": "Cancellando oggi ti restituiamo {amount}",
+      "noRefundNow": "Cancellare adesso non dà diritto a un rimborso",
+      "policies": {
+        "flexible": "Flessibile",
+        "moderate": "Moderata",
+        "strict": "Rigida",
+        "non_refundable": "Non rimborsabile"
+      }
+    },
     "continue": "Continua",
     "yourDetails": "I tuoi dati",
     "fullName": "Nome e cognome",
@@ -159,6 +173,7 @@
       "title": "Non è stato possibile completare la prenotazione",
       "unknown": "Si è verificato un errore. Riprova.",
       "unavailable": "Quelle date non sono più disponibili.",
+      "closed": "Quelle date non sono ancora aperte alle prenotazioni.",
       "min_nights": "Per quelle date il soggiorno minimo è più lungo.",
       "max_nights": "Il soggiorno è troppo lungo.",
       "max_guests": "L'appartamento non può ospitare così tante persone.",

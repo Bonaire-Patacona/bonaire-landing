@@ -35,6 +35,18 @@ export interface AvailabilityResponse {
   days: AvailabilityDay[]
 }
 
+export interface RefundTier {
+  days_before: number
+  refund_pct: number
+}
+
+export interface CancellationTerms {
+  code: string
+  name: string
+  tiers: RefundTier[]
+  notes: string
+}
+
 export interface NightPrice {
   date: string
   cents: number
@@ -66,7 +78,7 @@ export interface QuoteResponse {
   min_nights: number
   checkin_time: string
   checkout_time: string
-  cancellation_policy: string
+  cancellation: CancellationTerms
   available: boolean
 }
 

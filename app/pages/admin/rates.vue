@@ -152,7 +152,7 @@ useSeoMeta({ title: 'Precios · Bonaire Patacona', robots: 'noindex, nofollow' }
           variant="subtle"
           icon="i-lucide-info"
           :title="`Tarifa base: ${formatMoney(settings?.base_nightly_cents ?? 0, settings?.currency ?? 'EUR')} por noche`"
-          description="Las temporadas sustituyen la tarifa base en sus fechas. Si dos temporadas se solapan, gana la de mayor prioridad. Puedes cambiar la tarifa base en Ajustes."
+          description="Las temporadas sustituyen la tarifa base en sus fechas. Si dos temporadas se solapan, gana la de mayor prioridad. Por encima de todo esto manda el precio que fijes a mano en el Calendario. La tarifa base se cambia en Ajustes."
         />
 
         <USkeleton

@@ -131,6 +131,20 @@
     "payNow": "A pagar ara",
     "payLater": "Resta abans del {date}",
     "securityDeposit": "Fiança reemborsable de {amount} (ara no es cobra).",
+    "cancellation": {
+      "title": "Política de cancel·lació",
+      "tier": "Reemborsament del {pct}% si cancel·les almenys {days} dies abans de l'entrada",
+      "tierSameDay": "Reemborsament del {pct}% si cancel·les abans de l'entrada",
+      "none": "Sense reemborsament un cop confirmada la reserva",
+      "refundNow": "Si cancel·les hui et tornem {amount}",
+      "noRefundNow": "Cancel·lar ara no dona dret a reemborsament",
+      "policies": {
+        "flexible": "Flexible",
+        "moderate": "Moderada",
+        "strict": "Estricta",
+        "non_refundable": "No reemborsable"
+      }
+    },
     "continue": "Continuar",
     "yourDetails": "Les teues dades",
     "fullName": "Nom i cognoms",
@@ -159,6 +173,7 @@
       "title": "No s'ha pogut completar la reserva",
       "unknown": "S'ha produït un error inesperat. Torna-ho a provar.",
       "unavailable": "Aquestes dates ja no estan disponibles.",
+      "closed": "Aquestes dates encara no estan obertes a reserva.",
       "min_nights": "L'estada mínima és més llarga per a aquestes dates.",
       "max_nights": "L'estada és massa llarga.",
       "max_guests": "L'apartament no admet tants hostes.",

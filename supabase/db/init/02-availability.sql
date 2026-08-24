@@ -73,7 +73,40 @@ begin
 end;
 $$;
 
--- Flat list of unavailable days for the public calendar widget.
+-- Is the property even on sale on this range?
+--
+-- In 'open' mode it always is: only bookings and blocks take days off the
+-- market. In 'closed' mode the calendar starts shut and every night of the stay
+-- has to fall inside one of the ranges the host opened.
+create or replace function public.is_range_open(p_from date, p_to date)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_mode text;
+begin
+  select availability_mode into v_mode from public.app_settings where id = 1;
+  if coalesce(v_mode, 'open') <> 'closed' then
+    return true;
+  end if;
+
+  return not exists (
+    select 1
+    from generate_series(p_from, p_to - 1, interval '1 day') as d
+    where not exists (
+      select 1 from public.open_periods o
+      where d::date >= o.start_date and d::date < o.end_date
+    )
+  );
+end;
+$$;
+
+-- Flat list of unavailable days for the public calendar widget: everything that
+-- is physically taken, plus everything the booking policy keeps off the market
+-- (outside the rolling window, or not opened yet in 'closed' mode).
 create or replace function public.unavailable_days(
   p_from date default current_date,
   p_to   date default (current_date + 540)
@@ -84,14 +117,33 @@ stable
 security definer
 set search_path = public
 as $$
-  select distinct d::date
-  from public.calendar_blocks cb
-  cross join lateral generate_series(
-    greatest(cb.start_date, p_from),
-    least(cb.end_date - 1, p_to),
-    interval '1 day'
-  ) as d
-  where cb.start_date <= p_to and cb.end_date > p_from
+  with s as (
+    select availability_mode, advance_notice_days, booking_window_days
+    from public.app_settings where id = 1
+  ),
+  taken as (
+    select distinct d::date as day
+    from public.calendar_blocks cb
+    cross join lateral generate_series(
+      greatest(cb.start_date, p_from),
+      least(cb.end_date - 1, p_to),
+      interval '1 day'
+    ) as d
+    where cb.start_date <= p_to and cb.end_date > p_from
+  ),
+  off_policy as (
+    select d::date as day
+    from s, generate_series(p_from, p_to, interval '1 day') as d
+    where d::date < current_date + s.advance_notice_days
+       or d::date > current_date + s.booking_window_days
+       or (s.availability_mode = 'closed' and not exists (
+             select 1 from public.open_periods o
+             where d::date >= o.start_date and d::date < o.end_date
+           ))
+  )
+  select day from taken
+  union
+  select day from off_policy
   order by 1;
 $$;
 
@@ -107,10 +159,18 @@ as $$
 declare
   s            public.app_settings%rowtype;
   rp           public.rate_periods%rowtype;
+  v_override   integer;
   v_base       integer;
   v_uplift     numeric;
   v_is_weekend boolean;
 begin
+  -- A price typed on the calendar is final: no season, no weekend uplift.
+  select nightly_cents into v_override
+  from public.rate_overrides where day = p_day;
+  if v_override is not null then
+    return v_override;
+  end if;
+
   select * into s from public.app_settings where id = 1;
 
   select * into rp
@@ -134,20 +194,32 @@ end;
 $$;
 
 -- Per-night prices + the minimum stay that applies to a check-in date.
+-- The shape changed when per-day overrides arrived, and `create or replace`
+-- cannot widen a returns-table, so the old one goes first.
+drop function if exists public.rate_calendar(date, date);
 create or replace function public.rate_calendar(
   p_from date default current_date,
   p_to   date default (current_date + 365)
 )
-returns table (day date, nightly_cents integer, min_nights integer, available boolean)
+returns table (
+  day           date,
+  nightly_cents integer,
+  min_nights    integer,
+  available     boolean,
+  overridden    boolean,
+  note          text
+)
 language sql
 stable
 security definer
 set search_path = public
 as $$
+  with un as (select u.day from public.unavailable_days(p_from, p_to) u)
   select
     d::date,
     public.nightly_rate_cents(d::date),
     coalesce(
+      (select o.min_nights from public.rate_overrides o where o.day = d::date),
       (select r.min_nights
          from public.rate_periods r
         where r.active and r.min_nights is not null
@@ -156,10 +228,9 @@ as $$
         limit 1),
       (select min_nights from public.app_settings where id = 1)
     ),
-    not exists (
-      select 1 from public.calendar_blocks cb
-      where daterange(cb.start_date, cb.end_date, '[)') @> d::date
-    )
+    not exists (select 1 from un where un.day = d::date),
+    exists (select 1 from public.rate_overrides o where o.day = d::date),
+    (select o.note from public.rate_overrides o where o.day = d::date)
   from generate_series(p_from, p_to, interval '1 day') as d
   order by 1;
 $$;

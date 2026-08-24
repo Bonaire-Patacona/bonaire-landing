@@ -38,6 +38,10 @@ interface Settings {
   security_deposit_cents: number
   hold_minutes: number
   cancellation_policy: string
+  availability_mode: 'open' | 'closed'
+  auto_charge_balance: boolean
+  balance_retry_days: number
+  security_deposit_mode: 'none' | 'card_on_file'
 }
 
 const { data: settings } = await useAsyncData<Settings>('admin-settings', async () => {
@@ -72,7 +76,11 @@ const form = reactive({
   balance_due_days_before: 14,
   security_deposit: '0',
   hold_minutes: 30,
-  cancellation_policy: ''
+  cancellation_policy: '',
+  availability_mode: 'open' as Settings['availability_mode'],
+  auto_charge_balance: true,
+  balance_retry_days: 3,
+  security_deposit_mode: 'none' as Settings['security_deposit_mode']
 })
 
 watchEffect(() => {
@@ -104,7 +112,11 @@ watchEffect(() => {
     balance_due_days_before: s.balance_due_days_before,
     security_deposit: String(fromCents(s.security_deposit_cents)),
     hold_minutes: s.hold_minutes,
-    cancellation_policy: s.cancellation_policy
+    cancellation_policy: s.cancellation_policy,
+    availability_mode: s.availability_mode,
+    auto_charge_balance: s.auto_charge_balance,
+    balance_retry_days: s.balance_retry_days,
+    security_deposit_mode: s.security_deposit_mode
   })
 })
 
@@ -147,7 +159,11 @@ async function save() {
     balance_due_days_before: form.balance_due_days_before,
     security_deposit_cents: toCents(form.security_deposit),
     hold_minutes: form.hold_minutes,
-    cancellation_policy: form.cancellation_policy
+    cancellation_policy: form.cancellation_policy,
+    availability_mode: form.availability_mode,
+    auto_charge_balance: form.auto_charge_balance,
+    balance_retry_days: form.balance_retry_days,
+    security_deposit_mode: form.security_deposit_mode
   }).eq('id', 1)
 
   saving.value = false
@@ -350,7 +366,7 @@ useSeoMeta({ title: 'Ajustes · Bonaire Patacona', robots: 'noindex, nofollow' }
             </UFormField>
             <UFormField
               label="Resto a pagar (días antes)"
-              hint="Se genera un enlace de pago"
+              hint="Fecha en la que vence el saldo"
             >
               <UInputNumber
                 v-model="form.balance_due_days_before"
@@ -359,8 +375,43 @@ useSeoMeta({ title: 'Ajustes · Bonaire Patacona', robots: 'noindex, nofollow' }
               />
             </UFormField>
             <UFormField
-              label="Fianza reembolsable (€)"
-              hint="Informativa; se gestiona en la llegada"
+              label="Cobrar el resto automáticamente"
+              hint="Con la tarjeta guardada al reservar"
+              class="sm:col-span-2"
+            >
+              <USwitch
+                v-model="form.auto_charge_balance"
+                label="Cobro desatendido del saldo"
+              />
+            </UFormField>
+            <UFormField
+              v-if="form.auto_charge_balance"
+              label="Días de reintento"
+              hint="Después se genera un enlace de pago"
+            >
+              <UInputNumber
+                v-model="form.balance_retry_days"
+                :min="0"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              label="Fianza"
+              class="sm:col-span-2"
+            >
+              <USelect
+                v-model="form.security_deposit_mode"
+                :items="[
+                  { label: 'No se gestiona por la web', value: 'none' },
+                  { label: 'Tarjeta guardada, se cobra solo si hay daños', value: 'card_on_file' }
+                ]"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              label="Importe de referencia de la fianza (€)"
+              hint="Lo que se propone al cobrar daños"
             >
               <UInput
                 v-model="form.security_deposit"
@@ -385,7 +436,81 @@ useSeoMeta({ title: 'Ajustes · Bonaire Patacona', robots: 'noindex, nofollow' }
             variant="subtle"
             icon="i-lucide-calculator"
             title="Ejemplo: 7 noches a tarifa base"
-            :description="`Total ${formatMoney(depositPreview.total, form.currency)} · al reservar ${formatMoney(depositPreview.deposit, form.currency)} · resto ${formatMoney(depositPreview.balance, form.currency)}`"
+            :description="`Total ${formatMoney(depositPreview.total, form.currency)} · al reservar ${formatMoney(depositPreview.deposit, form.currency)} · resto ${formatMoney(depositPreview.balance, form.currency)} ${form.auto_charge_balance ? `(se cobra solo ${form.balance_due_days_before} días antes de la entrada)` : '(enlace de pago manual)'}`"
+          />
+
+          <UAlert
+            v-if="form.auto_charge_balance"
+            class="mt-3"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-credit-card"
+            title="La tarjeta queda guardada, no retenida"
+            description="Stripe no puede retener un importe más de 7 días, así que el total no se preautoriza: la tarjeta se guarda al pagar la señal y el resto se le cobra en la fecha de vencimiento. Dilo en la política de cancelación."
+          />
+
+          <UAlert
+            v-if="form.security_deposit_mode === 'card_on_file'"
+            class="mt-3"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-shield"
+            title="La fianza no se retiene, se guarda la tarjeta"
+            description="No se bloquea ningún importe al huésped. Si hay daños, se cobran desde la ficha de la reserva. Tiene que estar escrito en la política de cancelación para que el cargo sea legítimo."
+          />
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <h2 class="font-semibold text-highlighted">
+              Disponibilidad
+            </h2>
+          </template>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <UFormField
+              label="Qué fechas están a la venta"
+              class="sm:col-span-2"
+            >
+              <USelect
+                v-model="form.availability_mode"
+                :items="[
+                  { label: 'Todo abierto salvo lo que bloquee', value: 'open' },
+                  { label: 'Todo cerrado salvo lo que abra', value: 'closed' }
+                ]"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              label="Antelación mínima (días)"
+              hint="No se puede reservar para hoy mismo"
+            >
+              <UInputNumber
+                v-model="form.advance_notice_days"
+                :min="0"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField
+              label="Abierto hasta (días vista)"
+              hint="Ventana móvil, se desplaza cada día"
+            >
+              <UInputNumber
+                v-model="form.booking_window_days"
+                :min="1"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <UAlert
+            v-if="form.availability_mode === 'closed'"
+            class="mt-4"
+            color="info"
+            variant="subtle"
+            icon="i-lucide-calendar-check"
+            title="El calendario empieza cerrado"
+            description="Solo se pueden reservar los rangos que abras desde Calendario → Abrir fechas."
           />
         </UCard>
 
@@ -411,25 +536,6 @@ useSeoMeta({ title: 'Ajustes · Bonaire Patacona', robots: 'noindex, nofollow' }
               />
             </UFormField>
             <UFormField
-              label="Antelación mínima (días)"
-            >
-              <UInputNumber
-                v-model="form.advance_notice_days"
-                :min="0"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              label="Ventana de reserva (días)"
-              hint="Hasta cuándo se puede reservar"
-            >
-              <UInputNumber
-                v-model="form.booking_window_days"
-                :min="1"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
               label="Días de margen entre estancias"
               hint="0 = permite entrada el día de salida"
             >
@@ -440,7 +546,8 @@ useSeoMeta({ title: 'Ajustes · Bonaire Patacona', robots: 'noindex, nofollow' }
               />
             </UFormField>
             <UFormField
-              label="Política de cancelación"
+              label="Condiciones adicionales de cancelación"
+              hint="Se añaden a la política elegida en Cancelaciones"
               class="sm:col-span-2"
             >
               <UTextarea

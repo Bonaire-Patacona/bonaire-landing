@@ -131,6 +131,20 @@
     "payNow": "Jetzt fällig",
     "payLater": "Restbetrag bis {date}",
     "securityDeposit": "Erstattbare Kaution von {amount} (wird jetzt nicht belastet).",
+    "cancellation": {
+      "title": "Stornierungsbedingungen",
+      "tier": "{pct}% Erstattung bei Stornierung mindestens {days} Tage vor der Anreise",
+      "tierSameDay": "{pct}% Erstattung bei Stornierung vor der Anreise",
+      "none": "Keine Erstattung nach Bestätigung der Buchung",
+      "refundNow": "Bei Stornierung heute erhalten Sie {amount} zurück",
+      "noRefundNow": "Eine Stornierung jetzt berechtigt nicht zu einer Erstattung",
+      "policies": {
+        "flexible": "Flexibel",
+        "moderate": "Moderat",
+        "strict": "Streng",
+        "non_refundable": "Nicht erstattungsfähig"
+      }
+    },
     "continue": "Weiter",
     "yourDetails": "Deine Daten",
     "fullName": "Vor- und Nachname",
@@ -159,6 +173,7 @@
       "title": "Buchung konnte nicht abgeschlossen werden",
       "unknown": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "unavailable": "Diese Termine sind nicht mehr verfügbar.",
+      "closed": "Diese Termine sind noch nicht buchbar.",
       "min_nights": "Für diese Termine gilt ein längerer Mindestaufenthalt.",
       "max_nights": "Dieser Aufenthalt ist zu lang.",
       "max_guests": "Die Wohnung bietet nicht so vielen Gästen Platz.",

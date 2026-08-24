@@ -131,6 +131,20 @@
     "payNow": "Nu te betalen",
     "payLater": "Restant vóór {date}",
     "securityDeposit": "Terugbetaalbare borg van {amount} (wordt nu niet afgeschreven).",
+    "cancellation": {
+      "title": "Annuleringsvoorwaarden",
+      "tier": "{pct}% terugbetaling als je minstens {days} dagen voor aankomst annuleert",
+      "tierSameDay": "{pct}% terugbetaling als je voor aankomst annuleert",
+      "none": "Geen terugbetaling zodra de boeking bevestigd is",
+      "refundNow": "Annuleer je vandaag, dan krijg je {amount} terug",
+      "noRefundNow": "Nu annuleren geeft geen recht op terugbetaling",
+      "policies": {
+        "flexible": "Flexibel",
+        "moderate": "Gematigd",
+        "strict": "Streng",
+        "non_refundable": "Niet terugbetaalbaar"
+      }
+    },
     "continue": "Doorgaan",
     "yourDetails": "Jouw gegevens",
     "fullName": "Volledige naam",
@@ -159,6 +173,7 @@
       "title": "De boeking kon niet worden voltooid",
       "unknown": "Er ging iets mis. Probeer het opnieuw.",
       "unavailable": "Die data zijn niet meer beschikbaar.",
+      "closed": "Die data staan nog niet open voor boekingen.",
       "min_nights": "Voor die data geldt een langer minimumverblijf.",
       "max_nights": "Dit verblijf is te lang.",
       "max_guests": "Het appartement biedt geen plaats aan zoveel gasten.",

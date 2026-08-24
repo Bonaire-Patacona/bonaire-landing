@@ -7,7 +7,7 @@
  */
 import { isIsoDate } from '~~/server/utils/dates'
 import { isRangeAvailable } from '~~/server/utils/availability'
-import { assertNoDbError, getRatePeriods, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
+import { assertNoDbError, getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
 import { buildQuote, QuoteError } from '~~/server/utils/pricing'
 import { generateReference } from '~~/server/utils/reference'
 
@@ -38,7 +38,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Those dates are already taken' })
   }
 
-  const [settings, periods] = await Promise.all([getSettings(), getRatePeriods()])
+  const [settings, periods, overrides, cancellation] = await Promise.all([
+    getSettings(), getRatePeriods(), getRateOverrides(), getCancellationPolicy()
+  ])
 
   // The host may override the price; otherwise fall back to the rate card.
   // House rules (min stay, notice) do not apply to a manual entry.
@@ -53,7 +55,8 @@ export default defineEventHandler(async (event) => {
       },
       { ...settings, min_nights: 1, advance_notice_days: 0, booking_window_days: 3650 },
       periods,
-      body.check_in
+      body.check_in,
+      overrides
     )
   } catch (error) {
     if (!(error instanceof QuoteError)) throw error
@@ -85,6 +88,7 @@ export default defineEventHandler(async (event) => {
     balance_cents: total - paid,
     amount_paid_cents: paid,
     price_breakdown: quote?.breakdown ?? [],
+    cancellation_policy: cancellation,
     confirmed_at: new Date().toISOString()
   }).select().single()
 

@@ -6,6 +6,8 @@
  * proves they know the email address on the booking.
  */
 import { assertNoDbError, getSettings, serviceClient } from '~~/server/utils/supabase'
+import { policyFromSnapshot, refundFor } from '~~/server/utils/cancellation'
+import { today } from '~~/server/utils/dates'
 
 export default defineEventHandler(async (event) => {
   const reference = getRouterParam(event, 'reference')?.toUpperCase()
@@ -24,6 +26,13 @@ export default defineEventHandler(async (event) => {
   const settings = await getSettings()
   const email = String(getQuery(event).email ?? '').trim().toLowerCase()
   const verified = Boolean(email) && email === data.guest_email
+
+  // The terms this booking was sold under, not whatever is configured today.
+  const cancellation = policyFromSnapshot(data.cancellation_policy)
+  const refundable = refundFor(
+    { amount_paid_cents: data.amount_paid_cents, check_in: data.check_in, policy: cancellation },
+    today()
+  )
 
   setHeader(event, 'cache-control', 'no-store')
 
@@ -50,7 +59,8 @@ export default defineEventHandler(async (event) => {
     price_breakdown: data.price_breakdown,
     checkin_time: settings.checkin_time,
     checkout_time: settings.checkout_time,
-    cancellation_policy: settings.cancellation_policy,
+    cancellation,
+    refund_if_cancelled_now: ['pending', 'confirmed'].includes(data.status) ? refundable : null,
     property_name: settings.property_name,
     contact_email: settings.contact_email,
     guest_name: verified ? data.guest_name : maskName(data.guest_name),

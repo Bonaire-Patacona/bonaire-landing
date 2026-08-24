@@ -28,6 +28,21 @@ export async function isRangeAvailable(
   return data === true
 }
 
+/**
+ * Is the property on sale at all on those dates? Separate from
+ * isRangeAvailable() on purpose: this is the host's sales policy
+ * (app_settings.availability_mode + public.open_periods), and the back office
+ * is allowed to book straight over it.
+ */
+export async function isRangeOpen(from: string, to: string): Promise<boolean> {
+  const { data, error } = await serviceClient().rpc('is_range_open', {
+    p_from: from,
+    p_to: to
+  })
+  assertNoDbError(error, 'checking the opening calendar')
+  return data === true
+}
+
 export async function getUnavailableDays(from: string, to: string): Promise<string[]> {
   const { data, error } = await serviceClient().rpc('unavailable_days', {
     p_from: from,

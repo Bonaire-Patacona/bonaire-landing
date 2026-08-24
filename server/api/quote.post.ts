@@ -6,7 +6,7 @@
  */
 import { isIsoDate, today } from '~~/server/utils/dates'
 import { isRangeAvailable } from '~~/server/utils/availability'
-import { getRatePeriods, getSettings } from '~~/server/utils/supabase'
+import { getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
 import { QuoteError, buildQuote } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'check_in and check_out must be YYYY-MM-DD' })
   }
 
-  const [settings, periods] = await Promise.all([getSettings(), getRatePeriods()])
+  const [settings, periods, overrides] = await Promise.all([getSettings(), getRatePeriods(), getRateOverrides()])
 
   let quote
   try {
@@ -34,7 +34,8 @@ export default defineEventHandler(async (event) => {
       },
       settings,
       periods,
-      today()
+      today(),
+      overrides
     )
   } catch (error) {
     if (error instanceof QuoteError) {
@@ -47,7 +48,10 @@ export default defineEventHandler(async (event) => {
     throw error
   }
 
-  const available = await isRangeAvailable(quote.check_in, quote.check_out)
+  const [available, cancellation] = await Promise.all([
+    isRangeAvailable(quote.check_in, quote.check_out),
+    getCancellationPolicy()
+  ])
 
-  return { ...quote, available }
+  return { ...quote, available, cancellation }
 })

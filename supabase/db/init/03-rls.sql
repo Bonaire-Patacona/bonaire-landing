@@ -13,9 +13,12 @@ alter view public.calendar_blocks set (security_invoker = true);
 alter table public.profiles         enable row level security;
 alter table public.app_settings     enable row level security;
 alter table public.rate_periods     enable row level security;
+alter table public.rate_overrides   enable row level security;
+alter table public.cancellation_policies enable row level security;
 alter table public.bookings         enable row level security;
 alter table public.booking_payments enable row level security;
 alter table public.blocked_dates    enable row level security;
+alter table public.open_periods     enable row level security;
 alter table public.ical_feeds       enable row level security;
 alter table public.external_blocks  enable row level security;
 alter table public.stripe_events    enable row level security;
@@ -38,8 +41,9 @@ declare
   t text;
 begin
   foreach t in array array[
-    'app_settings', 'rate_periods', 'bookings', 'booking_payments',
-    'blocked_dates', 'ical_feeds', 'external_blocks'
+    'app_settings', 'rate_periods', 'rate_overrides', 'cancellation_policies',
+    'bookings', 'booking_payments',
+    'blocked_dates', 'open_periods', 'ical_feeds', 'external_blocks'
   ]
   loop
     execute format('drop policy if exists %I on public.%I', t || '_admin_all', t);
@@ -69,8 +73,9 @@ declare
   t text;
 begin
   foreach t in array array[
-    'profiles', 'app_settings', 'rate_periods', 'bookings', 'booking_payments',
-    'blocked_dates', 'ical_feeds', 'external_blocks'
+    'profiles', 'app_settings', 'rate_periods', 'rate_overrides', 'cancellation_policies',
+    'bookings', 'booking_payments',
+    'blocked_dates', 'open_periods', 'ical_feeds', 'external_blocks'
   ]
   loop
     execute format('grant select, insert, update, delete on public.%I to authenticated', t);
@@ -96,4 +101,5 @@ grant execute on function public.unavailable_days(date, date)          to anon, 
 grant execute on function public.rate_calendar(date, date)             to anon, authenticated, service_role;
 grant execute on function public.nightly_rate_cents(date)              to anon, authenticated, service_role;
 grant execute on function public.is_range_available(date, date, uuid)  to anon, authenticated, service_role;
+grant execute on function public.is_range_open(date, date)             to anon, authenticated, service_role;
 grant execute on function public.is_admin()                            to authenticated, service_role;

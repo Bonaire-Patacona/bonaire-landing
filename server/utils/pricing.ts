@@ -5,8 +5,8 @@
  * report built straight on the database agree on the number. All amounts are
  * integer minor units (cents) — money never touches a float.
  */
-import { addDays, eachNight, isWeekendNight, nightsBetween } from './dates'
-import type { AppSettings, NightPrice, Quote, RatePeriod } from './types'
+import { addDays, eachNight, isWeekendNight, nightsBetween, today } from './dates'
+import type { AppSettings, BalanceChargeStatus, NightPrice, Quote, RateOverride, RateOverrideMap, RatePeriod } from './types'
 
 export class QuoteError extends Error {
   constructor(readonly code: string, message: string) {
@@ -27,7 +27,30 @@ export function ratePeriodFor(day: string, periods: RatePeriod[]): RatePeriod | 
   })[0]!
 }
 
-export function nightlyRate(day: string, settings: AppSettings, periods: RatePeriod[]): NightPrice {
+/** Index the per-day overrides once, then look them up per night. */
+export function overridesByDay(rows: RateOverride[]): RateOverrideMap {
+  return new Map(rows.map(row => [row.day, row]))
+}
+
+const NO_OVERRIDES: RateOverrideMap = new Map()
+
+export function nightlyRate(
+  day: string,
+  settings: AppSettings,
+  periods: RatePeriod[],
+  overrides: RateOverrideMap = NO_OVERRIDES
+): NightPrice {
+  // A price typed on the calendar is taken literally: no season, no uplift.
+  const override = overrides.get(day)
+  if (override?.nightly_cents != null) {
+    return {
+      date: day,
+      cents: override.nightly_cents,
+      weekend: isWeekendNight(day),
+      rate_period: override.note ?? null
+    }
+  }
+
   const period = ratePeriodFor(day, periods)
   const base = period?.nightly_cents ?? settings.base_nightly_cents
   const uplift = Number(period?.weekend_uplift_pct ?? settings.weekend_uplift_pct ?? 0)
@@ -38,7 +61,15 @@ export function nightlyRate(day: string, settings: AppSettings, periods: RatePer
 }
 
 /** Minimum stay that applies to a check-in date (season overrides the global setting). */
-export function minNightsFor(day: string, settings: AppSettings, periods: RatePeriod[]): number {
+export function minNightsFor(
+  day: string,
+  settings: AppSettings,
+  periods: RatePeriod[],
+  overrides: RateOverrideMap = NO_OVERRIDES
+): number {
+  const override = overrides.get(day)
+  if (override?.min_nights != null) return override.min_nights
+
   const withMin = periods.filter(
     p => p.active && p.min_nights != null && day >= p.start_date && day <= p.end_date
   )
@@ -58,6 +89,50 @@ export function depositFor(totalCents: number, settings: AppSettings): number {
   }
 }
 
+/** Balance charges run at this hour (UTC) on the due date, not at midnight. */
+const CHARGE_HOUR_UTC = 9
+
+export interface BalanceSchedule {
+  status: BalanceChargeStatus
+  next_attempt_at: string | null
+}
+
+/** The moment of the day a charge scheduled for `day` becomes due. */
+export function chargeMomentFor(day: string): string {
+  return `${day}T${String(CHARGE_HOUR_UTC).padStart(2, '0')}:00:00.000Z`
+}
+
+/**
+ * What the automatic collection of a booking's balance should do next.
+ *
+ * The balance is never pre-authorised at booking time: a card authorisation
+ * only survives about 7 days, and most stays are booked months ahead. It is a
+ * second, merchant-initiated charge against the card saved with the deposit,
+ * which is only possible when there is one.
+ */
+export function planBalanceCharge(input: {
+  outstanding_cents: number
+  balance_due_date: string | null
+  has_card_on_file: boolean
+  auto_charge_balance: boolean
+}, now: string = today()): BalanceSchedule {
+  if (input.outstanding_cents <= 0) {
+    return { status: 'not_due', next_attempt_at: null }
+  }
+  // No card kept, or the host collects balances by hand: the back office gets a
+  // payment link instead of an unattended charge.
+  if (!input.auto_charge_balance || !input.has_card_on_file) {
+    return { status: 'manual', next_attempt_at: null }
+  }
+
+  // Booked inside the balance window (or with no due date at all): due now.
+  const dueDay = input.balance_due_date && input.balance_due_date > now
+    ? input.balance_due_date
+    : now
+
+  return { status: 'scheduled', next_attempt_at: chargeMomentFor(dueDay) }
+}
+
 export interface QuoteInput {
   checkIn: string
   checkOut: string
@@ -73,7 +148,8 @@ export function buildQuote(
   input: QuoteInput,
   settings: AppSettings,
   periods: RatePeriod[],
-  now: string
+  now: string,
+  overrides: RateOverrideMap = NO_OVERRIDES
 ): Quote {
   const { checkIn, checkOut } = input
   const adults = Math.max(1, Math.trunc(input.adults))
@@ -85,7 +161,7 @@ export function buildQuote(
   }
 
   const nights = nightsBetween(checkIn, checkOut)
-  const minNights = minNightsFor(checkIn, settings, periods)
+  const minNights = minNightsFor(checkIn, settings, periods, overrides)
 
   if (checkIn < addDays(now, settings.advance_notice_days)) {
     throw new QuoteError('too_soon', `Bookings need ${settings.advance_notice_days} day(s) of notice`)
@@ -103,7 +179,7 @@ export function buildQuote(
     throw new QuoteError('max_guests', `This apartment sleeps up to ${settings.max_guests} guests`)
   }
 
-  const breakdown = eachNight(checkIn, checkOut).map(day => nightlyRate(day, settings, periods))
+  const breakdown = eachNight(checkIn, checkOut).map(day => nightlyRate(day, settings, periods, overrides))
   const nightlySubtotal = breakdown.reduce((sum, night) => sum + night.cents, 0)
 
   const extraGuests = Math.max(0, guests - settings.guests_included)
@@ -153,7 +229,6 @@ export function buildQuote(
     security_deposit_cents: settings.security_deposit_cents,
     min_nights: minNights,
     checkin_time: settings.checkin_time,
-    checkout_time: settings.checkout_time,
-    cancellation_policy: settings.cancellation_policy
+    checkout_time: settings.checkout_time
   }
 }

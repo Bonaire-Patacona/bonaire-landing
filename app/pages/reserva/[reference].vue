@@ -32,7 +32,8 @@ interface BookingSummary {
   balance_due_date: string | null
   checkin_time: string
   checkout_time: string
-  cancellation_policy: string
+  cancellation: CancellationTerms
+  refund_if_cancelled_now: { refund_pct: number, refund_cents: number, days_before: number } | null
   property_name: string
   contact_email: string | null
   guest_name: string
@@ -197,13 +198,19 @@ useSeoMeta({
             </p>
           </div>
 
-          <UAlert
-            v-if="booking.cancellation_policy"
-            color="neutral"
-            variant="subtle"
-            icon="i-lucide-info"
-            :description="booking.cancellation_policy"
+          <BookingCancellationTerms
+            :policy="booking.cancellation"
+            boxed
           />
+
+          <p
+            v-if="booking.refund_if_cancelled_now"
+            class="text-xs text-muted"
+          >
+            {{ booking.refund_if_cancelled_now.refund_cents > 0
+              ? $t('booking.cancellation.refundNow', { amount: money(booking.refund_if_cancelled_now.refund_cents) })
+              : $t('booking.cancellation.noRefundNow') }}
+          </p>
         </div>
 
         <template #footer>

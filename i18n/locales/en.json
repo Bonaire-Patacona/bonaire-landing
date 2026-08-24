@@ -131,6 +131,20 @@
     "payNow": "Due today",
     "payLater": "Balance by {date}",
     "securityDeposit": "Refundable damage deposit of {amount} (not charged now).",
+    "cancellation": {
+      "title": "Cancellation policy",
+      "tier": "{pct}% refund if you cancel at least {days} days before check-in",
+      "tierSameDay": "{pct}% refund if you cancel before check-in",
+      "none": "No refund once the booking is confirmed",
+      "refundNow": "Cancel today and you get {amount} back",
+      "noRefundNow": "Cancelling now does not entitle you to a refund",
+      "policies": {
+        "flexible": "Flexible",
+        "moderate": "Moderate",
+        "strict": "Strict",
+        "non_refundable": "Non-refundable"
+      }
+    },
     "continue": "Continue",
     "yourDetails": "Your details",
     "fullName": "Full name",
@@ -159,6 +173,7 @@
       "title": "We could not complete the booking",
       "unknown": "Something went wrong. Please try again.",
       "unavailable": "Those dates are no longer available.",
+      "closed": "Those dates are not open for booking yet.",
       "min_nights": "The minimum stay is longer for those dates.",
       "max_nights": "That stay is too long.",
       "max_guests": "The apartment cannot host that many guests.",

@@ -1,5 +1,10 @@
 -- =============================================================================
 -- Optional starting data. Tweak everything later from /admin/settings.
+--
+-- This runs on every deploy, so it must only ever touch a settings row nobody
+-- has configured yet: the guard below matches the factory defaults from
+-- 01-app-schema.sql. Without it, a redeploy would quietly reset the host's
+-- prices, fees and deposit rules back to these demo values.
 -- =============================================================================
 
 update public.app_settings
@@ -26,8 +31,14 @@ update public.app_settings
        balance_due_days_before = 14,
        security_deposit_cents = 20000,
        hold_minutes           = 30,
-       cancellation_policy    = 'Cancelacion gratuita hasta 14 dias antes de la llegada. Despues, el deposito no es reembolsable.'
- where id = 1;
+       -- The refund ladder itself now lives in public.cancellation_policies and
+       -- is rendered in the guest's language; this field is only the addendum
+       -- underneath it, so it must not restate the tiers.
+       cancellation_policy    = 'Los gastos de gestion de la pasarela de pago no son reembolsables.'
+ where id = 1
+   and contact_email is null
+   and base_nightly_cents = 9000
+   and cleaning_fee_cents = 4500;
 
 insert into public.rate_periods (name, start_date, end_date, nightly_cents, min_nights, priority)
 select * from (values

@@ -99,12 +99,72 @@ create table if not exists public.app_settings (
   -- How long an unpaid booking holds the dates
   hold_minutes              integer     not null default 30 check (hold_minutes >= 5),
 
+  -- Extra conditions shown underneath whichever policy applies.
   cancellation_policy       text        not null default '',
   ical_export_token         uuid        not null default gen_random_uuid(),
   updated_at                timestamptz not null default now()
 );
 
 insert into public.app_settings (id) values (1) on conflict (id) do nothing;
+
+-- Columns added after the first release. `create table if not exists` above is a
+-- no-op on a database that already has the table, so new settings arrive here.
+alter table public.app_settings
+  -- 'open'   -> every day is on sale unless something blocks it (the default)
+  -- 'closed' -> only the ranges in public.open_periods are on sale
+  add column if not exists availability_mode text not null default 'open'
+    check (availability_mode in ('open', 'closed')),
+  -- Charge the balance to the card the guest used at booking, unattended.
+  add column if not exists auto_charge_balance boolean not null default true,
+  -- How many days to keep retrying a declined balance charge before giving up
+  -- and falling back to emailing a payment link.
+  add column if not exists balance_retry_days integer not null default 3
+    check (balance_retry_days >= 0),
+  -- How the refundable damage deposit is handled:
+  --   'none'         -> not collected through the site at all
+  --   'card_on_file' -> nothing is held; damages are charged to the saved card
+  -- A real hold is deliberately not on offer: Stripe releases an authorisation
+  -- after ~7 days, so covering a stay would mean re-authorising every few days,
+  -- and every renewal is another chance for the issuer to decline.
+  add column if not exists security_deposit_mode text not null default 'none'
+    check (security_deposit_mode in ('none', 'card_on_file')),
+  -- Which of public.cancellation_policies applies to new bookings. Not a
+  -- foreign key: a policy the host deletes must not take app_settings with it.
+  add column if not exists cancellation_policy_code text not null default 'moderate';
+
+-- -----------------------------------------------------------------------------
+-- Cancellation policies
+--
+-- A policy is a refund ladder: "cancel at least `days_before` days before
+-- check-in and you get `refund_pct` of what you paid back". Tiers are stored
+-- most generous first; the first one the guest still qualifies for wins, and
+-- falling off the end means no refund.
+--
+-- The four built-ins are seeded once and then belong to the host: a later
+-- deploy will not overwrite an edited one.
+-- -----------------------------------------------------------------------------
+create table if not exists public.cancellation_policies (
+  id          uuid primary key default gen_random_uuid(),
+  code        text        not null unique,
+  name        text        not null,
+  builtin     boolean     not null default false,
+  tiers       jsonb       not null default '[]'::jsonb,
+  notes       text        not null default '',
+  active      boolean     not null default true,
+  sort_order  integer     not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+insert into public.cancellation_policies (code, name, builtin, tiers, sort_order) values
+  ('flexible', 'Flexible', true,
+   '[{"days_before": 1, "refund_pct": 100}]'::jsonb, 10),
+  ('moderate', 'Moderada', true,
+   '[{"days_before": 14, "refund_pct": 100}, {"days_before": 7, "refund_pct": 50}]'::jsonb, 20),
+  ('strict', 'Estricta', true,
+   '[{"days_before": 30, "refund_pct": 100}, {"days_before": 14, "refund_pct": 50}]'::jsonb, 30),
+  ('non_refundable', 'No reembolsable', true,
+   '[]'::jsonb, 40)
+on conflict (code) do nothing;
 
 -- -----------------------------------------------------------------------------
 -- Seasonal rates
@@ -124,6 +184,22 @@ create table if not exists public.rate_periods (
 );
 
 create index if not exists rate_periods_range_idx on public.rate_periods (start_date, end_date) where active;
+
+-- -----------------------------------------------------------------------------
+-- Per-day overrides
+--
+-- The last word on what a single night costs, edited straight on the calendar.
+-- Beats both the seasons and the base rate, and an explicit price is used as
+-- typed: no weekend uplift is applied on top of it.
+-- -----------------------------------------------------------------------------
+create table if not exists public.rate_overrides (
+  day            date primary key,
+  nightly_cents  integer check (nightly_cents >= 0),
+  min_nights     integer check (min_nights >= 1),
+  note           text,
+  created_at     timestamptz not null default now(),
+  constraint rate_overrides_not_empty check (nightly_cents is not null or min_nights is not null)
+);
 
 -- -----------------------------------------------------------------------------
 -- Bookings
@@ -199,6 +275,53 @@ create index if not exists bookings_dates_idx   on public.bookings (check_in, ch
 create index if not exists bookings_status_idx  on public.bookings (status);
 create index if not exists bookings_email_idx   on public.bookings (lower(guest_email));
 
+-- The card the guest paid the deposit with, kept on file so the balance can be
+-- charged off-session on balance_due_date. A card authorisation cannot be held
+-- for more than 7 days, so the total is never pre-authorised: it is collected
+-- in two merchant-initiated charges against the same payment method.
+alter table public.bookings
+  add column if not exists stripe_payment_method_id text,
+  add column if not exists card_saved_at timestamptz,
+  add column if not exists balance_charge_status text not null default 'not_due'
+    check (balance_charge_status in (
+      'not_due',          -- nothing left to collect
+      'scheduled',        -- card on file, waiting for balance_next_attempt_at
+      'processing',       -- claimed by the payments task right now
+      'succeeded',
+      'requires_action',  -- the issuer wants the guest to authenticate (SCA)
+      'failed',           -- retries exhausted; a payment link was generated
+      'manual'            -- no card on file, the host collects it by hand
+    )),
+  add column if not exists balance_charge_attempts integer not null default 0,
+  add column if not exists balance_next_attempt_at timestamptz,
+  add column if not exists balance_last_error text;
+
+create index if not exists bookings_balance_due_idx
+  on public.bookings (balance_next_attempt_at)
+  where balance_charge_status = 'scheduled';
+
+-- The cancellation policy exactly as the guest accepted it. A snapshot rather
+-- than a reference: editing a policy, or switching to another one, must never
+-- change the terms of a booking that is already on the books.
+alter table public.bookings
+  add column if not exists cancellation_policy jsonb not null default '{}'::jsonb,
+  add column if not exists refunded_cents integer not null default 0;
+
+-- Bookings taken before policies existed carry no snapshot, and an empty one
+-- reads as "no refund". The policy configured at the time is what actually
+-- applied to them, so freeze that in instead of quietly hardening their terms.
+-- Only ever touches rows that have never been stamped.
+update public.bookings b
+   set cancellation_policy = jsonb_build_object(
+         'code',  p.code,
+         'name',  p.name,
+         'tiers', p.tiers,
+         'notes', coalesce(concat_ws(E'\n\n', nullif(p.notes, ''), nullif(s.cancellation_policy, '')), '')
+       )
+  from public.app_settings s
+  join public.cancellation_policies p on p.code = s.cancellation_policy_code
+ where b.cancellation_policy = '{}'::jsonb;
+
 -- A booking only blocks the calendar while it is pending (and not expired) or confirmed.
 create or replace function public.booking_blocks_calendar(b public.bookings)
 returns boolean
@@ -247,6 +370,24 @@ create table if not exists public.blocked_dates (
 );
 
 create index if not exists blocked_dates_range_idx on public.blocked_dates (start_date, end_date);
+
+-- -----------------------------------------------------------------------------
+-- Open periods — the mirror image of blocked_dates.
+--
+-- Only consulted when app_settings.availability_mode = 'closed', where the
+-- calendar starts entirely shut and a stay is only sellable if every one of its
+-- nights falls inside one of these ranges.
+-- -----------------------------------------------------------------------------
+create table if not exists public.open_periods (
+  id          uuid primary key default gen_random_uuid(),
+  start_date  date not null,
+  end_date    date not null,          -- exclusive, same convention as bookings
+  note        text,
+  created_at  timestamptz not null default now(),
+  constraint open_periods_range_valid check (end_date > start_date)
+);
+
+create index if not exists open_periods_range_idx on public.open_periods (start_date, end_date);
 
 -- -----------------------------------------------------------------------------
 -- Two-way iCal sync

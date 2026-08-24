@@ -1,6 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { H3Event } from 'h3'
-import type { AppSettings, RatePeriod } from './types'
+import { addDays, today } from './dates'
+import { NON_REFUNDABLE, normaliseTiers } from './cancellation'
+import { overridesByDay } from './pricing'
+import type { CancellationPolicy } from './cancellation'
+import type { AppSettings, RateOverride, RateOverrideMap, RatePeriod } from './types'
 
 let client: SupabaseClient | null = null
 
@@ -47,6 +51,8 @@ export function assertNoDbError(error: { message: string, code?: string } | null
 const CACHE_MS = 15_000
 let settingsCache: { at: number, value: AppSettings } | null = null
 let ratesCache: { at: number, value: RatePeriod[] } | null = null
+let overridesCache: { at: number, value: RateOverrideMap } | null = null
+let policyCache: { at: number, value: CancellationPolicy } | null = null
 
 export async function getSettings(force = false): Promise<AppSettings> {
   if (!force && settingsCache && Date.now() - settingsCache.at < CACHE_MS) {
@@ -71,9 +77,77 @@ export async function getRatePeriods(force = false): Promise<RatePeriod[]> {
   return ratesCache.value
 }
 
+/**
+ * Per-day prices, indexed by day. One row per overridden night, so even a fully
+ * hand-priced year is a few hundred rows — cheap enough to hold whole. Bounded
+ * anyway, because a silently truncated page here would quote the wrong price.
+ */
+const OVERRIDE_LOOKBEHIND_DAYS = 365
+const OVERRIDE_LOOKAHEAD_DAYS = 1095
+const OVERRIDE_LIMIT = 5000
+
+export async function getRateOverrides(force = false): Promise<RateOverrideMap> {
+  if (!force && overridesCache && Date.now() - overridesCache.at < CACHE_MS) {
+    return overridesCache.value
+  }
+  const now = today()
+  const { data, error } = await serviceClient()
+    .from('rate_overrides')
+    .select('*')
+    .gte('day', addDays(now, -OVERRIDE_LOOKBEHIND_DAYS))
+    .lte('day', addDays(now, OVERRIDE_LOOKAHEAD_DAYS))
+    .order('day')
+    .limit(OVERRIDE_LIMIT)
+  assertNoDbError(error, 'loading rate overrides')
+
+  const rows = (data ?? []) as RateOverride[]
+  if (rows.length === OVERRIDE_LIMIT) {
+    console.warn('[pricing] hit the rate override limit; some nights will fall back to the rate card')
+  }
+
+  overridesCache = { at: Date.now(), value: overridesByDay(rows) }
+  return overridesCache.value
+}
+
+/**
+ * The cancellation policy new bookings are sold under, with the extra
+ * conditions from app_settings appended. A missing or deleted policy falls back
+ * to no refund rather than to a generous default: the safe side of a mistake.
+ */
+export async function getCancellationPolicy(force = false): Promise<CancellationPolicy> {
+  if (!force && policyCache && Date.now() - policyCache.at < CACHE_MS) {
+    return policyCache.value
+  }
+
+  const settings = await getSettings(force)
+  const { data, error } = await serviceClient()
+    .from('cancellation_policies')
+    .select('*')
+    .eq('code', settings.cancellation_policy_code)
+    .maybeSingle()
+  assertNoDbError(error, 'loading the cancellation policy')
+
+  const row = data as { code: string, name: string, tiers: unknown, notes: string } | null
+  const addendum = settings.cancellation_policy.trim()
+  const base = row ? { code: row.code, name: row.name, notes: row.notes } : NON_REFUNDABLE
+
+  policyCache = {
+    at: Date.now(),
+    value: {
+      code: base.code,
+      name: base.name,
+      tiers: row ? normaliseTiers(row.tiers) : [],
+      notes: [base.notes?.trim(), addendum].filter(Boolean).join('\n\n')
+    }
+  }
+  return policyCache.value
+}
+
 export function invalidatePricingCache(): void {
   settingsCache = null
   ratesCache = null
+  overridesCache = null
+  policyCache = null
 }
 
 /**

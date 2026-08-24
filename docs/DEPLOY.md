@@ -102,8 +102,32 @@ at the bottom of `.env.example`.
 ## 3. Create the first administrator
 
 `GOTRUE_DISABLE_SIGNUP=true`, so nobody can create an account from the outside.
-Create the owner's account once, then promote it — new profiles default to
-`viewer`, and only `admin` may write:
+
+**The easy way — `.env`**
+
+```
+ADMIN_EMAIL=tu@correo.com
+ADMIN_PASSWORD=una-contrasena-larga
+```
+
+The `migrator` picks these up on the next deploy and creates the account
+already confirmed and with `role = admin` (`supabase/db/bootstrap-admin.sql`).
+Re-running is a no-op: if the account already exists its password is left alone,
+so changing `ADMIN_PASSWORD` later has no effect. To force it — you lost the
+password, say — set `ADMIN_PASSWORD_RESET=true`, redeploy, then set it back to
+`false`. Both variables empty means no account is created at all.
+
+Watch it happen with `docker compose logs migrator`:
+
+```
+[migrate] ensuring the admin account for tu@correo.com
+NOTICE:  [admin] created tu@correo.com with the admin role
+```
+
+**By hand — GoTrue's admin API**
+
+Useful for a second account, or against a Supabase you do not control. New
+profiles default to `viewer`, and only `admin` may write, so promote it after:
 
 ```bash
 # Create the user (Studio → Authentication → Add user also works)
@@ -128,6 +152,7 @@ Then sign in at `https://<tu-dominio>/admin`.
    `https://<tu-dominio>/api/stripe/webhook`, subscribed to:
    - `checkout.session.completed`
    - `checkout.session.expired`
+   - `payment_intent.succeeded`
    - `payment_intent.payment_failed`
    - `charge.refunded`
 
@@ -139,7 +164,97 @@ endpoint shows deliveries in Stripe before taking real money.
 
 Test locally with `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 
-## 5. Connect the calendars (both directions)
+### Collecting the balance by itself
+
+With **Ajustes → Cobrar el resto automáticamente** on, the deposit checkout also
+stores the guest's card (`setup_future_usage: off_session`) and the
+`payments:balance` task charges whatever is left on `balance_due_date`.
+
+The total is deliberately *not* pre-authorised at booking time: a card
+authorisation expires after about 7 days, which is useless for a stay booked
+months ahead. Two consequences worth knowing before you switch it on:
+
+- Only cards can be charged again later, so the deposit checkout is restricted
+  to cards when this is enabled (no Bizum, no bank redirects).
+- An unattended charge can be declined, most often with `authentication_required`
+  when the issuer insists on SCA. The booking then flips to `requires_action` or
+  `failed`, a payment link is generated automatically, and it shows up on the
+  booking in `/admin/bookings` for you to send. Retries run daily for
+  `balance_retry_days` days first.
+
+Say so in the cancellation policy: the guest agrees to the later charge on the
+Stripe checkout page, and that text is what they will look for.
+
+### The damage deposit
+
+**Ajustes → Fianza** has the same two ways round: not handled by the site, or
+*tarjeta guardada*. There is deliberately no "hold" option — the same 7-day
+expiry applies, so holding a deposit across a stay would mean re-authorising
+every few days, and each renewal can be declined while the guest sees two
+pending amounts at once.
+
+With *tarjeta guardada* nothing is blocked. If something breaks, open the
+booking in `/admin/bookings` and use **Cobrar daños a la tarjeta guardada**. The
+importe in Ajustes is only the figure proposed there. This also has to be
+written in the cancellation policy for the charge to be legitimate.
+
+## 5. Decide which dates are on sale
+
+**Ajustes → Disponibilidad** has two ways round:
+
+- **Todo abierto salvo lo que bloquee** (the default) — every day is bookable
+  until a booking, a manual block or a channel event takes it.
+- **Todo cerrado salvo lo que abra** — the calendar starts shut and only the
+  ranges you add from **Calendario → Abrir fechas** can be booked.
+
+Either way *Abierto hasta (días vista)* keeps a rolling window: dates further
+out than that are not offered even if nothing occupies them, and the window
+moves forward on its own every day.
+
+In **Calendario** every cell shows what that night costs. Select cells — click,
+drag, or shift-click — and the bar at the bottom acts on the whole run:
+
+| Action | What it does |
+|---|---|
+| **Editar N noches** | Sets the price and/or the minimum stay of every selected night. Blank fields are left alone, so raising the price of forty nights does not mean retyping their minimum stay forty times. A hand-typed price beats the season and the base rate, and the weekend uplift is *not* added on top. **Volver a la tarifa** undoes it. |
+| **Abrir** | Puts the nights on sale (closed-by-default mode only) |
+| **Bloquear** | Takes them off the market, like an owner stay |
+| **Desbloquear / Cerrar** | The reverse. A block that sticks out past the selection is trimmed, not deleted whole |
+
+Selection accumulates and is never limited to one run: click nights one by one,
+drag for whole stretches, **Shift** to extend from the last one, **Esc** (or the
+× in the bar) to drop everything. Clicking a night that is already picked takes
+it back out. Blocking several disjoint runs writes one row per run.
+
+Hand-typed prices show in orange on the grid, so it is always obvious which
+nights are no longer following the rate card.
+
+## 6. Cancellation policies
+
+**/admin/policies** holds them. A policy is a refund ladder: *cancel at least N
+days before check-in and get X% of what you paid back*. The first tier the guest
+still reaches wins; reaching none means no refund. Four come seeded — Flexible,
+Moderada, Estricta and No reembolsable — and a deploy never overwrites one you
+have edited, so treat them as yours.
+
+One policy is the one new bookings are sold under (**Aplicar**). Two things
+follow from that, and both matter:
+
+- Every booking stores the policy **as accepted**. Changing the active policy,
+  or editing an existing one, does not touch bookings already on the books.
+- **Cancelar y reembolsar** in `/admin/bookings` asks the server what that
+  frozen policy owes before anything moves, and shows you the figure to confirm.
+
+Guests never read stored prose: the ladder is rendered from the locale files in
+all eight languages. *Condiciones adicionales* in Ajustes, and the notes on a
+policy, are the exception — they are shown verbatim, so write them in whichever
+language your guests share.
+
+Bookings that predate this feature are stamped on the first deploy with the
+policy that was configured at the time, which is the one that actually applied
+to them.
+
+## 7. Connect the calendars (both directions)
 
 Go to **/admin/channels**.
 
@@ -159,14 +274,15 @@ A word on the gap: channel calendars refresh on their own schedule (Airbnb polls
 roughly hourly), so a same-day double booking is still physically possible. The
 `turnover_days` setting adds a safety margin if you want one.
 
-## 6. Scheduled work
+## 8. Scheduled work
 
-Nitro runs two tasks in-process (`nuxt.config.ts` → `nitro.scheduledTasks`):
+Nitro runs three tasks in-process (`nuxt.config.ts` → `nitro.scheduledTasks`):
 
 | Task | Every | What it does |
 |---|---|---|
 | `ical:sync` | 30 min | Imports the channel calendars |
 | `bookings:housekeeping` | 10 min | Releases unpaid holds, closes past stays |
+| `payments:balance` | 1 h | Charges balances that have come due to the card on file |
 
 If you run more than one replica, they will both fire. Either keep a single
 replica, or drop `scheduledTasks` and drive `POST /api/cron/sync` from an
@@ -176,7 +292,7 @@ external scheduler instead:
 curl -X POST https://<tu-dominio>/api/cron/sync -H "Authorization: Bearer $CRON_SECRET"
 ```
 
-## 7. Backups
+## 9. Backups
 
 Everything worth keeping is in the `db-data` volume.
 
@@ -217,6 +333,9 @@ it:
 - `SUPABASE_KEY` — the `ANON_KEY`, used by the browser
 - `SERVICE_ROLE_KEY` — used by `server/` only; without it `/api/availability`
   answers *Supabase is not configured*
+
+Set `ADMIN_EMAIL` / `ADMIN_PASSWORD` as well (step 3) so the `migrator` leaves
+you an account to sign in with at http://localhost:3000/admin.
 
 Add `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` too if you want to walk
 through a payment; the rest of the flow works without them.

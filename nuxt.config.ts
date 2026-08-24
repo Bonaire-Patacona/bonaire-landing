@@ -65,7 +65,9 @@ export default defineNuxtConfig({
       // Pull Airbnb / Booking.com calendars in.
       '*/30 * * * *': ['ical:sync'],
       // Release expired holds, close past stays.
-      '*/10 * * * *': ['bookings:housekeeping']
+      '*/10 * * * *': ['bookings:housekeeping'],
+      // Charge balances that have come due to the card on file.
+      '15 * * * *': ['payments:balance']
     }
   },
 

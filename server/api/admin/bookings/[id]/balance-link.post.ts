@@ -2,10 +2,12 @@
  * POST /api/admin/bookings/:id/balance-link
  *
  * Creates a Stripe Checkout link for whatever is still owed and stores it on
- * the booking, so it can be pasted into an email to the guest.
+ * the booking, so it can be pasted into an email to the guest. Asking for the
+ * link means the host is taking the collection over by hand, so any pending
+ * automatic charge stands down.
  */
 import { assertNoDbError, getSettings, requireAdmin, serviceClient } from '~~/server/utils/supabase'
-import { getStripe, toStripeAmount } from '~~/server/utils/stripe'
+import { createBalanceCheckout } from '~~/server/utils/payments'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
@@ -25,33 +27,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const settings = await getSettings()
-  const siteUrl = useRuntimeConfig().public.siteUrl.replace(/\/$/, '')
-
-  const session = await getStripe().checkout.sessions.create({
-    mode: 'payment',
-    customer_email: booking.guest_email,
-    client_reference_id: booking.reference,
-    success_url: `${siteUrl}/reserva/${booking.reference}?paid=1`,
-    cancel_url: `${siteUrl}/reserva/${booking.reference}`,
-    metadata: { booking_id: booking.id, reference: booking.reference, kind: 'balance' },
-    payment_intent_data: {
-      metadata: { booking_id: booking.id, reference: booking.reference, kind: 'balance' }
-    },
-    line_items: [{
-      quantity: 1,
-      price_data: {
-        currency: booking.currency.toLowerCase(),
-        unit_amount: toStripeAmount(outstanding),
-        product_data: {
-          name: `${settings.property_name} · ${booking.reference}`,
-          description: `Remaining balance for ${booking.check_in} → ${booking.check_out}`
-        }
-      }
-    }]
-  })
+  const session = await createBalanceCheckout(booking, outstanding, settings)
 
   await supabase.from('bookings')
-    .update({ balance_payment_url: session.url })
+    .update({
+      balance_payment_url: session.url,
+      balance_charge_status: 'manual',
+      balance_next_attempt_at: null
+    })
     .eq('id', booking.id)
 
   await supabase.from('booking_payments').insert({

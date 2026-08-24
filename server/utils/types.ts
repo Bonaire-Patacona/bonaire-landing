@@ -1,3 +1,5 @@
+import type { CancellationPolicy } from './cancellation'
+
 export interface AppSettings {
   id: number
   property_name: string
@@ -27,8 +29,22 @@ export interface AppSettings {
   hold_minutes: number
   cancellation_policy: string
   ical_export_token: string
+  availability_mode: 'open' | 'closed'
+  auto_charge_balance: boolean
+  balance_retry_days: number
+  security_deposit_mode: 'none' | 'card_on_file'
+  cancellation_policy_code: string
   updated_at: string
 }
+
+export type BalanceChargeStatus
+  = | 'not_due'
+    | 'scheduled'
+    | 'processing'
+    | 'succeeded'
+    | 'requires_action'
+    | 'failed'
+    | 'manual'
 
 export interface RatePeriod {
   id: string
@@ -41,6 +57,16 @@ export interface RatePeriod {
   priority: number
   active: boolean
 }
+
+/** A price (and/or minimum stay) typed on one specific day of the calendar. */
+export interface RateOverride {
+  day: string
+  nightly_cents: number | null
+  min_nights: number | null
+  note: string | null
+}
+
+export type RateOverrideMap = ReadonlyMap<string, RateOverride>
 
 export interface NightPrice {
   date: string
@@ -73,7 +99,6 @@ export interface Quote {
   min_nights: number
   checkin_time: string
   checkout_time: string
-  cancellation_policy: string
 }
 
 export interface BookingRow {
@@ -106,8 +131,16 @@ export interface BookingRow {
   stripe_checkout_session_id: string | null
   stripe_payment_intent_id: string | null
   stripe_customer_id: string | null
+  stripe_payment_method_id: string | null
+  card_saved_at: string | null
   balance_payment_url: string | null
   balance_due_date: string | null
+  balance_charge_status: BalanceChargeStatus
+  balance_charge_attempts: number
+  balance_next_attempt_at: string | null
+  balance_last_error: string | null
+  cancellation_policy: CancellationPolicy
+  refunded_cents: number
   hold_expires_at: string | null
   confirmed_at: string | null
   cancelled_at: string | null

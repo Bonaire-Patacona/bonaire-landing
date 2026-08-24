@@ -6,7 +6,7 @@
  */
 import { addDays, isIsoDate, today } from '~~/server/utils/dates'
 import { getUnavailableDays } from '~~/server/utils/availability'
-import { getRatePeriods, getSettings } from '~~/server/utils/supabase'
+import { getRateOverrides, getRatePeriods, getSettings } from '~~/server/utils/supabase'
 import { minNightsFor, nightlyRate } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
@@ -19,9 +19,10 @@ export default defineEventHandler(async (event) => {
   if (to > maxTo) to = maxTo
   if (to <= from) to = addDays(from, 1)
 
-  const [unavailable, periods] = await Promise.all([
+  const [unavailable, periods, overrides] = await Promise.all([
     getUnavailableDays(from, to),
-    getRatePeriods()
+    getRatePeriods(),
+    getRateOverrides()
   ])
 
   const taken = new Set(unavailable)
@@ -30,8 +31,8 @@ export default defineEventHandler(async (event) => {
     days.push({
       date: day,
       available: !taken.has(day),
-      cents: nightlyRate(day, settings, periods).cents,
-      min_nights: minNightsFor(day, settings, periods)
+      cents: nightlyRate(day, settings, periods, overrides).cents,
+      min_nights: minNightsFor(day, settings, periods, overrides)
     })
   }
 

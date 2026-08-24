@@ -7,8 +7,8 @@
  * confirms the payment — never from the browser.
  */
 import { isIsoDate, today } from '~~/server/utils/dates'
-import { isRangeAvailable, runHousekeeping } from '~~/server/utils/availability'
-import { assertNoDbError, getRatePeriods, getSettings, serviceClient } from '~~/server/utils/supabase'
+import { isRangeAvailable, isRangeOpen, runHousekeeping } from '~~/server/utils/availability'
+import { assertNoDbError, getCancellationPolicy, getRateOverrides, getRatePeriods, getSettings, serviceClient } from '~~/server/utils/supabase'
 import { QuoteError, buildQuote } from '~~/server/utils/pricing'
 import { generateReference } from '~~/server/utils/reference'
 import { getStripe, isStripeConfigured, toStripeAmount } from '~~/server/utils/stripe'
@@ -48,7 +48,12 @@ export default defineEventHandler(async (event) => {
   // Free up anything whose hold lapsed, so those dates can be re-sold now.
   await runHousekeeping()
 
-  const [settings, periods] = await Promise.all([getSettings(true), getRatePeriods(true)])
+  const [settings, periods, overrides, cancellation] = await Promise.all([
+    getSettings(true),
+    getRatePeriods(true),
+    getRateOverrides(true),
+    getCancellationPolicy(true)
+  ])
 
   let quote
   try {
@@ -61,13 +66,22 @@ export default defineEventHandler(async (event) => {
       },
       settings,
       periods,
-      today()
+      today(),
+      overrides
     )
   } catch (error) {
     if (error instanceof QuoteError) {
       throw createError({ statusCode: 422, statusMessage: error.message, data: { code: error.code } })
     }
     throw error
+  }
+
+  if (!(await isRangeOpen(quote.check_in, quote.check_out))) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'Those dates are not open for booking',
+      data: { code: 'closed' }
+    })
   }
 
   if (!(await isRangeAvailable(quote.check_in, quote.check_out))) {
@@ -111,6 +125,8 @@ export default defineEventHandler(async (event) => {
       security_deposit_cents: quote.security_deposit_cents,
       price_breakdown: quote.breakdown,
       balance_due_date: quote.balance_due_date,
+      // Frozen as accepted: editing the policy later cannot rewrite these terms.
+      cancellation_policy: cancellation,
       hold_expires_at: holdExpiresAt
     })
     .select()
@@ -133,18 +149,33 @@ export default defineEventHandler(async (event) => {
       status: booking.status,
       checkout_url: null,
       requires_manual_confirmation: true,
-      quote
+      quote,
+      cancellation
     }
   }
 
   const siteUrl = config.public.siteUrl.replace(/\/$/, '')
   const stripe = getStripe()
 
+  // Anything charged after tonight needs the card to survive this session,
+  // which means a Customer and a reusable payment method. An authorisation for
+  // the total would not work: it expires after ~7 days, long before a summer
+  // booking made in March comes due.
+  const willAutoChargeBalance = settings.auto_charge_balance && quote.balance_cents > 0
+  const needsCardOnFile = willAutoChargeBalance || settings.security_deposit_mode === 'card_on_file'
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: guestEmail,
       client_reference_id: booking.reference,
+      ...(needsCardOnFile
+        ? {
+            customer_creation: 'always' as const,
+            // Cards are the only method that can be charged again later.
+            payment_method_types: ['card' as const]
+          }
+        : {}),
       locale: stripeLocale(booking.locale),
       // Stripe releases the session (and we release the hold) at the same time.
       expires_at: Math.floor(Date.now() / 1000) + Math.max(30, settings.hold_minutes) * 60,
@@ -156,7 +187,8 @@ export default defineEventHandler(async (event) => {
         kind: 'deposit'
       },
       payment_intent_data: {
-        metadata: { booking_id: booking.id, reference: booking.reference, kind: 'deposit' }
+        metadata: { booking_id: booking.id, reference: booking.reference, kind: 'deposit' },
+        ...(needsCardOnFile ? { setup_future_usage: 'off_session' as const } : {})
       },
       line_items: [{
         quantity: 1,
@@ -166,7 +198,9 @@ export default defineEventHandler(async (event) => {
           product_data: {
             name: `${settings.property_name} · ${quote.check_in} → ${quote.check_out}`,
             description: quote.balance_cents > 0
-              ? `Deposit (${quote.nights} nights). Balance due by ${quote.balance_due_date}.`
+              ? willAutoChargeBalance
+                ? `Deposit (${quote.nights} nights). The remaining ${(quote.balance_cents / 100).toFixed(2)} ${quote.currency} is charged to this card on ${quote.balance_due_date}.`
+                : `Deposit (${quote.nights} nights). Balance due by ${quote.balance_due_date}.`
               : `Full payment (${quote.nights} nights).`
           }
         }
@@ -191,7 +225,8 @@ export default defineEventHandler(async (event) => {
       status: booking.status,
       checkout_url: session.url,
       requires_manual_confirmation: false,
-      quote
+      quote,
+      cancellation
     }
   } catch (stripeError) {
     // Do not sit on the dates if we could not even open a checkout.

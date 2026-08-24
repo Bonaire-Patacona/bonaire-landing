@@ -71,6 +71,12 @@ services:
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
       <<: *db-env
+      # The image's own init runs before Postgres listens on TCP, so it has to
+      # reach the server over the Unix socket. Leaving the `db` hostname from
+      # x-db-env here makes that step fail and the cluster comes up without the
+      # supabase_auth_admin / authenticator / … roles, which then breaks auth,
+      # rest and storage. Every other service keeps using the `db` hostname.
+      POSTGRES_HOST: /var/run/postgresql
       PGDATA: /var/lib/postgresql/data
       POSTGRES_INITDB_ARGS: "--data-checksums"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -103,9 +109,15 @@ services:
       PGUSER: supabase_admin
       PGPASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: ${POSTGRES_DB:-postgres}
+      # First back-office account. Left empty -> no account is created.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_PASSWORD_RESET: ${ADMIN_PASSWORD_RESET:-false}
     volumes:
       - ./supabase/db/init:/sql:ro
       - ./supabase/db/migrate.sh:/migrate.sh:ro
+      - ./supabase/db/roles.sql:/roles.sql:ro
+      - ./supabase/db/bootstrap-admin.sql:/bootstrap-admin.sql:ro
     entrypoint: ["/bin/sh", "/migrate.sh"]
 
   # ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@
  * uptime pinger). Disabled unless NUXT_CRON_SECRET is set.
  */
 import { runHousekeeping } from '~~/server/utils/availability'
+import { chargeDueBalances } from '~~/server/utils/payments'
 import { syncAllFeeds } from '~~/server/utils/ical-sync'
 import { requireCronSecret } from '~~/server/utils/supabase'
 
@@ -16,7 +17,8 @@ export default defineEventHandler(async (event) => {
   requireCronSecret(event)
 
   const housekeeping = await runHousekeeping()
+  const payments = await chargeDueBalances()
   const feeds = useRuntimeConfig().icalSyncEnabled === 'false' ? [] : await syncAllFeeds()
 
-  return { housekeeping, feeds }
+  return { housekeeping, payments, feeds }
 })

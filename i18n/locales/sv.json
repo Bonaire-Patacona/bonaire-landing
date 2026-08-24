@@ -121,6 +121,20 @@
     "payNow": "Att betala nu",
     "payLater": "Resterande före {date}",
     "securityDeposit": "Återbetalningsbar deposition på {amount} (dras inte nu).",
+    "cancellation": {
+      "title": "Avbokningsvillkor",
+      "tier": "{pct}% återbetalning om du avbokar minst {days} dagar före incheckning",
+      "tierSameDay": "{pct}% återbetalning om du avbokar före incheckning",
+      "none": "Ingen återbetalning när bokningen är bekräftad",
+      "refundNow": "Avbokar du i dag får du tillbaka {amount}",
+      "noRefundNow": "Att avboka nu ger ingen rätt till återbetalning",
+      "policies": {
+        "flexible": "Flexibel",
+        "moderate": "Måttlig",
+        "strict": "Strikt",
+        "non_refundable": "Ej återbetalningsbar"
+      }
+    },
     "continue": "Fortsätt",
     "yourDetails": "Dina uppgifter",
     "fullName": "För- och efternamn",
@@ -149,6 +163,7 @@
       "title": "Bokningen kunde inte slutföras",
       "unknown": "Något gick fel. Försök igen.",
       "unavailable": "De datumen är inte längre lediga.",
+      "closed": "De datumen är ännu inte öppna för bokning.",
       "min_nights": "Minsta vistelse är längre för de datumen.",
       "max_nights": "Vistelsen är för lång.",
       "max_guests": "Lägenheten rymmer inte så många gäster.",
