@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
     )
   } catch (error) {
     if (error instanceof QuoteError) {
-      throw createError({ statusCode: 422, statusMessage: error.message, data: { code: error.code } })
+      throw createError({ statusCode: 422, statusMessage: error.message, data: { code: error.code, ...error.details } })
     }
     throw error
   }

@@ -102,7 +102,7 @@ export function useBookingEngine() {
   const quote = ref<QuoteResponse | null>(null)
   const loadingAvailability = ref(false)
   const loadingQuote = ref(false)
-  const quoteError = ref<{ code: string, message: string } | null>(null)
+  const quoteError = ref<{ code: string, message: string, params: Record<string, unknown> } | null>(null)
 
   const unavailable = computed(() => new Set(availability.value?.unavailable ?? []))
   const priceByDate = computed(() => {
@@ -137,10 +137,15 @@ export function useBookingEngine() {
       })
     } catch (error) {
       quote.value = null
-      const err = error as { data?: { data?: { code?: string }, message?: string, statusMessage?: string } }
+      const err = error as {
+        data?: { data?: Record<string, unknown>, message?: string, statusMessage?: string }
+      }
+      const { code, ...params } = err.data?.data ?? {}
       quoteError.value = {
-        code: err.data?.data?.code ?? 'unknown',
-        message: err.data?.statusMessage ?? err.data?.message ?? 'Could not price those dates'
+        code: typeof code === 'string' ? code : 'unknown',
+        message: err.data?.statusMessage ?? err.data?.message ?? 'Could not price those dates',
+        // The limit itself, so the message can name it.
+        params
       }
     } finally {
       loadingQuote.value = false

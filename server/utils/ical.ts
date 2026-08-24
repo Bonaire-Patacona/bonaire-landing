@@ -13,7 +13,43 @@ export interface IcsEvent {
   summary: string
   start: string // YYYY-MM-DD, inclusive
   end: string // YYYY-MM-DD, exclusive
+  /** Deep link back to the channel, when the feed offers one. */
+  link?: string
   raw?: string
+}
+
+/**
+ * Whether an imported event is a stay somebody actually booked, or just a night
+ * the channel is not selling.
+ *
+ * Only some feeds say. Airbnb writes 'Reserved' for a real reservation and
+ * 'Airbnb (Not available)' for anything else — including the dates it closed
+ * because it imported *our* calendar. Booking.com exports every busy night as
+ * 'CLOSED - Not available' whatever the reason, so its reservations are simply
+ * not distinguishable from its blocks.
+ *
+ * Hence the conservative default: 'closed' means "unavailable, reason not
+ * disclosed", never "definitely not a booking".
+ */
+export type ExternalEventKind = 'reservation' | 'closed'
+
+const RESERVATION_MARKERS = ['reserved', 'reservation', 'booked', 'reserva']
+
+const URL_RE = /https?:\/\/[^\s<>"]+/
+
+function firstUrl(text: string): string | undefined {
+  return URL_RE.exec(text ?? '')?.[0]
+}
+
+export function classifyExternalEvent(summary: string): ExternalEventKind {
+  const text = (summary ?? '').toLowerCase()
+
+  // "CLOSED - Not available" and "Not available" win over a stray 'reserved':
+  // a channel that says the night is merely closed is not claiming a booking.
+  if (text.includes('not available') || text.includes('unavailable') || text.includes('closed')) {
+    return 'closed'
+  }
+  return RESERVATION_MARKERS.some(marker => text.includes(marker)) ? 'reservation' : 'closed'
 }
 
 // -----------------------------------------------------------------------------
@@ -68,6 +104,7 @@ export function parseIcs(text: string): IcsEvent[] {
           summary: current.summary || 'Blocked',
           start: current.start,
           end: current.end,
+          link: current.link,
           raw: current.lines?.join('\n')
         })
       }
@@ -89,6 +126,11 @@ export function parseIcs(text: string): IcsEvent[] {
         break
       case 'SUMMARY':
         current.summary = unescapeText(value)
+        break
+      // Airbnb puts "Reservation URL: https://..." here on real reservations
+      // and leaves it out of its plain blocks. Booking.com never sends it.
+      case 'DESCRIPTION':
+        current.link = firstUrl(unescapeText(value)) ?? current.link
         break
       case 'DTSTART':
         current.start = parseIcsDate(value) ?? current.start

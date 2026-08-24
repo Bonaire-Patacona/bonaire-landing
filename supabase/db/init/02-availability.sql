@@ -3,6 +3,11 @@
 -- =============================================================================
 
 -- Every date range that makes the property unavailable, from all sources.
+--
+-- The trailing columns are what the back-office calendar draws on a booking
+-- pill; they are null for anything that is not a booking. Only ever appended
+-- to, never reordered: `create or replace view` refuses anything else, and this
+-- file is re-applied on every deploy.
 create or replace view public.calendar_blocks as
   select
     b.id::text                    as source_id,
@@ -10,7 +15,14 @@ create or replace view public.calendar_blocks as
     b.source                      as channel,
     b.check_in                    as start_date,
     b.check_out                   as end_date,
-    coalesce(b.guest_name, 'Reserva') as label
+    coalesce(b.guest_name, 'Reserva') as label,
+    b.reference                   as reference,
+    b.status                      as status,
+    b.total_cents                 as total_cents,
+    b.currency                    as currency,
+    null::text                    as event_kind,
+    null::text                    as link,
+    null::boolean                 as assume_reservations
   from public.bookings b
   where public.booking_blocks_calendar(b)
 union all
@@ -20,7 +32,14 @@ union all
     'manual'::text,
     d.start_date,
     d.end_date,
-    coalesce(d.reason, 'Bloqueig')
+    coalesce(d.reason, 'Bloqueig'),
+    null::text,
+    null::text,
+    null::integer,
+    null::text,
+    null::text,
+    null::text,
+    null::boolean
   from public.blocked_dates d
 union all
   select
@@ -29,7 +48,14 @@ union all
     f.channel,
     e.start_date,
     e.end_date,
-    coalesce(e.summary, f.name)
+    coalesce(e.summary, f.name),
+    null::text,
+    null::text,
+    null::integer,
+    null::text,
+    e.event_kind,
+    e.link,
+    coalesce(f.treat_closed_as_reservation, f.channel = 'booking')
   from public.external_blocks e
   join public.ical_feeds f on f.id = e.feed_id
   where f.active;

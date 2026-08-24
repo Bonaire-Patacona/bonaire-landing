@@ -19,6 +19,13 @@ interface Block {
   start_date: string
   end_date: string
   label: string
+  reference: string | null
+  status: string | null
+  total_cents: number | null
+  currency: string | null
+  event_kind: 'reservation' | 'closed' | null
+  link: string | null
+  assume_reservations: boolean | null
 }
 
 interface OpenPeriod {
@@ -337,15 +344,58 @@ async function releaseSelection() {
 }
 
 // --- bulk edit of the selected nights ----------------------------------------
-// Empty means "leave as it is", so a host raising the price of forty nights
-// does not have to retype their minimum stay forty times.
+// The form shows what these nights are worth and saves exactly that: a field
+// with a value becomes an override, an empty one drops back to the season or
+// the base rate. No hidden "leave it as it was".
 const bulk = reactive({ nightly: '', minNights: '', note: '' })
 
+/**
+ * What the selected nights currently span, when they do not all agree. Shown as
+ * the placeholder of the field that could not be filled in, so the spread is
+ * visible without a warning box.
+ */
+const spread = reactive({ nightly: '', minNights: '' })
+
+function selectedRates(): RateDay[] {
+  return selection.value.map(day => rateByDay.value.get(day)).filter(Boolean) as RateDay[]
+}
+
+/**
+ * The value the whole selection already shares, or null when the nights differ.
+ * Prefilling from just the first night would quietly flatten the rest.
+ */
+function sharedValue<T>(read: (rate: RateDay) => T): T | null {
+  const rates = selectedRates()
+  if (!rates.length) return null
+
+  const first = read(rates[0]!)
+  return rates.every(rate => read(rate) === first) ? first : null
+}
+
+/** "165 € – 214,50 €" across the selection, or '' when they all match. */
+function spreadOf(read: (rate: RateDay) => number, format: (value: number) => string): string {
+  const values = selectedRates().map(read)
+  if (!values.length) return ''
+
+  const low = Math.min(...values)
+  const high = Math.max(...values)
+  return low === high ? '' : `${format(low)} – ${format(high)}`
+}
+
 function openBulkModal() {
-  const first = selection.value[0] ? rateByDay.value.get(selection.value[0]) : null
-  bulk.nightly = first ? String(fromCents(first.nightly_cents)) : ''
-  bulk.minNights = ''
-  bulk.note = ''
+  const cents = sharedValue(rate => rate.nightly_cents)
+  const minNights = sharedValue(rate => rate.min_nights)
+  const note = sharedValue(rate => rate.note)
+
+  bulk.nightly = cents === null ? '' : String(fromCents(cents))
+  bulk.minNights = minNights === null ? '' : String(minNights)
+  bulk.note = note ?? ''
+
+  // Blank now means "back to the rate card", so a field left blank because the
+  // nights disagree says what they actually span.
+  spread.nightly = spreadOf(rate => rate.nightly_cents, value => formatMoney(value, currency.value))
+  spread.minNights = spreadOf(rate => rate.min_nights, value => `${value}`)
+
   showBulkModal.value = true
 }
 
@@ -357,10 +407,6 @@ async function saveBulk() {
   const minNights = bulk.minNights.trim() ? Math.trunc(Number(bulk.minNights)) : null
   const note = bulk.note.trim()
 
-  if (cents === null && minNights === null && !note) {
-    toast.add({ title: 'No has cambiado nada', color: 'error' })
-    return
-  }
   if (cents !== null && cents <= 0) {
     toast.add({ title: 'El precio tiene que ser mayor que cero', color: 'error' })
     return
@@ -370,38 +416,28 @@ async function saveBulk() {
     return
   }
 
-  busy.value = true
-  // Merge with what is already there: a blank field must not wipe a value the
-  // host set on an earlier pass.
-  const { data: existing, error: readError } = await supabase
-    .from('rate_overrides').select('*').in('day', days)
-
-  if (readError) {
-    busy.value = false
-    toast.add({ title: 'No se pudo leer los precios', description: readError.message, color: 'error' })
+  // Nothing left to pin down: drop the overrides so the season and the base
+  // rate take over again. The table would reject an empty row anyway, and a
+  // note on its own has nothing to annotate.
+  if (cents === null && minNights === null) {
+    const cleared = await run('restaurar la tarifa', () =>
+      supabase.from('rate_overrides').delete().in('day', days)
+    )
+    if (cleared) {
+      toast.add({ title: `${days.length} noche(s) vuelven a la tarifa`, color: 'success' })
+      showBulkModal.value = false
+      clearSelection()
+    }
     return
   }
 
-  const previous = new Map(
-    ((existing ?? []) as Array<{ day: string, nightly_cents: number | null, min_nights: number | null, note: string | null }>)
-      .map(row => [row.day, row])
-  )
+  const rows = days.map(day => ({
+    day,
+    nightly_cents: cents,
+    min_nights: minNights,
+    note: note || null
+  }))
 
-  const rows = days
-    .map((day) => {
-      const prev = previous.get(day)
-      return {
-        day,
-        nightly_cents: cents ?? prev?.nightly_cents ?? null,
-        min_nights: minNights ?? prev?.min_nights ?? null,
-        note: note || prev?.note || null
-      }
-    })
-    // A row with neither a price nor a minimum stay carries nothing; the table
-    // rejects it, and rightly so.
-    .filter(row => row.nightly_cents !== null || row.min_nights !== null)
-
-  busy.value = false
   const ok = await run('guardar los precios', () =>
     supabase.from('rate_overrides').upsert(rows, { onConflict: 'day' })
   )
@@ -426,24 +462,297 @@ async function resetPrice() {
 }
 
 // --- the grid -----------------------------------------------------------------
-const grid = computed(() =>
-  Array.from({ length: 42 }, (_, i) => {
-    const date = addDays(gridStart.value, i)
-    const block = occupancy.value.get(date) ?? null
-    const open = onSale.value.get(date) ?? null
-    const rate = rateByDay.value.get(date) ?? null
-    return {
-      date,
-      inMonth: date >= monthStart.value && date < monthEnd.value,
-      block,
-      open,
-      rate,
-      // Not on sale at all: nothing occupies it, the host simply has not
-      // opened it. Only ever true in 'closed' mode.
-      closed: !block && !open && mode.value === 'closed'
-    }
-  })
+const WEEKS = 6
+const LANE_HEIGHT_REM = 1.6
+const LANES_TOP_REM = 2
+
+const weeks = computed(() =>
+  Array.from({ length: WEEKS }, (_, week) => ({
+    index: week,
+    days: Array.from({ length: 7 }, (_, offset) => {
+      const date = addDays(gridStart.value, week * 7 + offset)
+      const block = occupancy.value.get(date) ?? null
+      const open = onSale.value.get(date) ?? null
+      return {
+        date,
+        inMonth: date >= monthStart.value && date < monthEnd.value,
+        block,
+        rate: rateByDay.value.get(date) ?? null,
+        // Not on sale at all: nothing occupies it, the host simply has not
+        // opened it. Only ever true in 'closed' mode.
+        closed: !block && !open && mode.value === 'closed',
+        openLabel: open && !block && mode.value === 'closed' ? (open.note ?? 'Abierto') : null
+      }
+    })
+  }))
 )
+
+/**
+ * What actually gets drawn, after untangling the channels.
+ *
+ * Two feeds reporting the same fortnight are one unavailable stretch, not two
+ * pills, and a channel closing dates because it imported our own calendar adds
+ * nothing at all — that stay is already on the board as our booking.
+ */
+interface DisplayBlock {
+  key: string
+  kind: 'booking' | 'blocked' | 'external'
+  channel: string
+  channels: string[]
+  start_date: string
+  end_date: string
+  label: string
+  reference: string | null
+  status: string | null
+  total_cents: number | null
+  currency: string | null
+  reservation: boolean
+  /** true when the feed said it outright, false when we assumed it. */
+  declared: boolean
+  link: string | null
+}
+
+/** The feed said so, in as many words. */
+const declaresReservation = (block: Block) => block.event_kind === 'reservation'
+
+/**
+ * Counts as a reservation on the board. Either the feed said so, or the feed
+ * cannot say and its channel is configured to treat everything it closes as a
+ * booking of its own (Booking.com, by default) — see
+ * ical_feeds.treat_closed_as_reservation.
+ */
+const countsAsReservation = (block: Block) =>
+  declaresReservation(block) || (block.kind === 'external' && block.assume_reservations === true)
+
+const displayBlocks = computed<DisplayBlock[]>(() => {
+  const all = blocks.value ?? []
+  const own = all.filter(block => block.kind !== 'external')
+  const external = all.filter(block => block.kind === 'external')
+
+  const result: DisplayBlock[] = own.map(block => ({
+    key: `${block.kind}-${block.source_id}`,
+    kind: block.kind,
+    channel: block.channel,
+    channels: [block.channel],
+    start_date: block.start_date,
+    end_date: block.end_date,
+    label: block.label,
+    reference: block.reference,
+    status: block.status,
+    total_cents: block.total_cents,
+    currency: block.currency,
+    reservation: block.kind === 'booking',
+    declared: true,
+    link: null
+  }))
+
+  // A channel block sitting inside one of our own stays is that stay coming
+  // back to us through the export. Nothing to show.
+  const echoes = (block: Block) =>
+    own.some(mine => mine.start_date <= block.start_date && mine.end_date >= block.end_date)
+
+  const remaining = external
+    .filter(block => !echoes(block))
+    .sort((a, b) => a.start_date.localeCompare(b.start_date))
+
+  // Merge whatever overlaps into one stretch: the channels mirror each other,
+  // and Booking.com splits a single stay into several events.
+  let current: Block[] = []
+  const flush = () => {
+    if (!current.length) return
+    result.push(mergeExternal(current))
+    current = []
+  }
+
+  for (const block of remaining) {
+    const end = current.reduce((latest, b) => (b.end_date > latest ? b.end_date : latest), '')
+    if (current.length && block.start_date < end) current.push(block)
+    else {
+      flush()
+      current = [block]
+    }
+  }
+  flush()
+
+  return result
+})
+
+function mergeExternal(group: Block[]): DisplayBlock {
+  const start = group.reduce((min, b) => (b.start_date < min ? b.start_date : min), group[0]!.start_date)
+  const end = group.reduce((max, b) => (b.end_date > max ? b.end_date : max), group[0]!.end_date)
+  const channels = [...new Set(group.map(b => b.channel))]
+
+  // A feed that names the reservation outright beats one that is only assumed
+  // to be reporting its own bookings: the same stay mirrored onto Booking.com
+  // should still read as the Airbnb reservation it is.
+  const booked = group.find(declaresReservation) ?? group.find(countsAsReservation)
+
+  return {
+    key: `external-${group.map(b => b.source_id).join('-')}`,
+    kind: 'external',
+    channel: booked?.channel ?? channels[0]!,
+    channels,
+    start_date: start,
+    end_date: end,
+    // 'CLOSED - Not available' is no use as a title once we have decided it is
+    // a booking, so an assumed reservation is named after nothing at all.
+    label: booked ? (declaresReservation(booked) ? booked.label : 'Reserva') : 'No disponible',
+    reference: null,
+    status: null,
+    total_cents: null,
+    currency: null,
+    reservation: Boolean(booked),
+    declared: Boolean(booked && declaresReservation(booked)),
+    link: booked?.link ?? null
+  }
+}
+
+interface PillSegment {
+  key: string
+  block: DisplayBlock
+  left: number
+  width: number
+  lane: number
+  roundStart: boolean
+  roundEnd: boolean
+}
+
+/**
+ * A stay drawn the way it is actually used: it starts halfway through the
+ * arrival day and ends halfway through the departure day, so the changeover
+ * day visibly belongs to both guests and back-to-back bookings do not look
+ * like a double booking.
+ *
+ * Positions are in columns (0–7) and turned into percentages by the template.
+ * Anything crossing a Sunday is cut and continues on the next row, square on
+ * the cut edge and rounded only where the stay really begins or ends.
+ */
+const weekSegments = computed<PillSegment[][]>(() => {
+  const columnOf = (day: string) => nightsBetween(gridStart.value, day)
+  const sorted = [...displayBlocks.value].sort((a, b) => a.start_date.localeCompare(b.start_date))
+
+  return Array.from({ length: WEEKS }, (_, week) => {
+    const rowStart = week * 7
+    const rowEnd = rowStart + 7
+    const laneEnds: number[] = []
+    const segments: PillSegment[] = []
+
+    for (const block of sorted) {
+      const startX = columnOf(block.start_date) + 0.5
+      const endX = columnOf(block.end_date) + 0.5
+      const left = Math.max(startX, rowStart)
+      const right = Math.min(endX, rowEnd)
+      if (right <= left) continue
+
+      // Overlapping stays (a channel block over a manual one) stack instead of
+      // hiding each other.
+      let lane = laneEnds.findIndex(end => end <= left)
+      if (lane === -1) {
+        lane = laneEnds.length
+        laneEnds.push(right)
+      } else {
+        laneEnds[lane] = right
+      }
+
+      segments.push({
+        key: `${block.key}-${week}`,
+        block,
+        left: left - rowStart,
+        width: right - left,
+        lane,
+        roundStart: startX >= rowStart,
+        roundEnd: endX <= rowEnd
+      })
+    }
+    return segments
+  })
+})
+
+/** Tall enough for the day number, the deepest pill stack and the price. */
+function rowMinHeight(week: number): string {
+  const lanes = Math.max(1, ...weekSegments.value[week]!.map(segment => segment.lane + 1))
+  return `${LANES_TOP_REM + lanes * LANE_HEIGHT_REM + 1.5}rem`
+}
+
+function pillStyle(segment: PillSegment) {
+  return {
+    left: `${(segment.left / 7) * 100}%`,
+    width: `${(segment.width / 7) * 100}%`,
+    top: `${LANES_TOP_REM + segment.lane * LANE_HEIGHT_REM}rem`
+  }
+}
+
+/**
+ * Where a stay came from, in one glance. Third-party colours are their brands,
+ * so they stay put; a direct booking wears the house colour and follows the
+ * theme.
+ */
+interface Appearance {
+  bg: string
+  icon: string
+  /** How the legend introduces it. */
+  name: string
+  /** The platform on its own, for badges and tooltips. */
+  label: string
+}
+
+const CHANNELS: Record<string, Appearance> = {
+  direct: { bg: 'bg-primary', icon: 'i-lucide-globe', name: 'Reserva directa', label: 'Directa' },
+  airbnb: { bg: 'bg-airbnb', icon: 'i-simple-icons-airbnb', name: 'Reserva de Airbnb', label: 'Airbnb' },
+  booking: { bg: 'bg-blue-800', icon: 'i-simple-icons-bookingdotcom', name: 'Reserva de Booking.com', label: 'Booking.com' },
+  vrbo: { bg: 'bg-sky-600', icon: 'i-lucide-house', name: 'Reserva de Vrbo', label: 'Vrbo' },
+  manual: { bg: 'bg-neutral-500', icon: 'i-lucide-wrench', name: 'Bloqueo manual', label: 'Manual' },
+  other: { bg: 'bg-slate-500', icon: 'i-lucide-link', name: 'Reserva de otro canal', label: 'Otro canal' }
+}
+
+/**
+ * Dates a channel merely closed — usually because it imported our calendar and
+ * mirrored back a stay that is already on the board. Deliberately unbranded: a
+ * Booking.com logo on these would claim a Booking.com reservation, and their
+ * feed never says that. Which channels reported it is in the tooltip and the
+ * dialog, where it cannot be mistaken for a booking.
+ */
+const SYNCED_CLOSED: Appearance = {
+  bg: 'bg-slate-400 dark:bg-slate-600',
+  icon: 'i-lucide-refresh-cw',
+  name: 'Cerrado por sincronización',
+  label: 'Cerrado'
+}
+
+function channelOf(channel: string) {
+  return CHANNELS[channel] ?? CHANNELS.other!
+}
+
+/** Only a confirmed reservation gets to wear a platform's colours. */
+function appearanceOf(block: DisplayBlock): Appearance {
+  if (block.kind === 'external' && !block.reservation) return SYNCED_CLOSED
+  return channelOf(block.channel)
+}
+
+/** A hold that nobody has paid for yet is not the same as a confirmed stay. */
+const isPending = (block: DisplayBlock) => block.status === 'pending'
+
+function pillTitle(block: DisplayBlock): string {
+  const where = block.kind === 'external' && !block.reservation
+    ? `${SYNCED_CLOSED.name}: ${block.channels.map(channel => channelOf(channel).label).join(' + ')}`
+    : channelOf(block.channel).name
+  return `${block.label} · ${where} · ${block.start_date} → ${block.end_date}`
+}
+
+// --- opening a pill ----------------------------------------------------------
+const inspecting = ref<DisplayBlock | null>(null)
+
+/**
+ * Our own bookings live in /admin/bookings, where every action on them already
+ * is; anything imported has no detail worth a page, so it opens in place.
+ */
+function inspectBlock(block: DisplayBlock) {
+  if (block.kind === 'booking' && block.reference) {
+    navigateTo(`/admin/bookings?ref=${block.reference}`)
+    return
+  }
+  inspecting.value = block
+}
 
 const monthLabel = computed(() =>
   new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' })
@@ -451,12 +760,6 @@ const monthLabel = computed(() =>
 )
 
 const weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-
-const kindColor = (kind: string) => ({
-  booking: 'bg-primary/20 text-primary',
-  blocked: 'bg-neutral-500/20 text-toned',
-  external: 'bg-airbnb/20 text-airbnb'
-}[kind] ?? '')
 
 function shiftMonth(delta: number) {
   const [year, month] = cursor.value.split('-').map(Number)
@@ -571,7 +874,7 @@ useSeoMeta({ title: 'Calendario · Bonaire Patacona', robots: 'noindex, nofollow
         />
 
         <div v-else>
-          <div class="grid grid-cols-7 gap-1 text-center text-xs text-muted mb-1">
+          <div class="grid grid-cols-7 text-center text-xs text-muted mb-1">
             <div
               v-for="weekday in weekdays"
               :key="weekday"
@@ -579,65 +882,106 @@ useSeoMeta({ title: 'Calendario · Bonaire Patacona', robots: 'noindex, nofollow
               {{ weekday }}
             </div>
           </div>
-          <div class="grid grid-cols-7 gap-1 select-none">
-            <button
-              v-for="cell in grid"
-              :key="cell.date"
-              type="button"
-              class="min-h-20 rounded-md border p-1 text-xs text-left flex flex-col"
-              :class="[
-                cell.inMonth ? '' : 'opacity-40',
-                cell.closed ? 'border-dashed border-muted bg-elevated text-dimmed' : 'border-default',
-                cell.block ? kindColor(cell.block.kind) : '',
-                isSelected(cell.date) ? 'ring-2 ring-primary ring-offset-1 ring-offset-default' : ''
-              ]"
-              :aria-pressed="isSelected(cell.date)"
-              @pointerdown="startSelection(cell.date, $event)"
-              @pointerenter="extendSelection(cell.date)"
+
+          <div class="select-none overflow-hidden rounded-lg border border-default">
+            <div
+              v-for="week in weeks"
+              :key="week.index"
+              class="relative grid grid-cols-7"
+              :style="{ minHeight: rowMinHeight(week.index) }"
             >
-              <span class="font-medium">{{ Number(cell.date.slice(8)) }}</span>
+              <button
+                v-for="cell in week.days"
+                :key="cell.date"
+                type="button"
+                class="flex flex-col border-b border-e border-default p-1 text-left text-xs last:border-e-0"
+                :class="[
+                  cell.inMonth ? '' : 'opacity-40',
+                  cell.closed ? 'bg-elevated text-dimmed' : '',
+                  isSelected(cell.date) ? 'bg-primary/10 ring-2 ring-inset ring-primary' : ''
+                ]"
+                :aria-pressed="isSelected(cell.date)"
+                @pointerdown="startSelection(cell.date, $event)"
+                @pointerenter="extendSelection(cell.date)"
+              >
+                <span class="font-medium">{{ Number(cell.date.slice(8)) }}</span>
 
-              <span
-                v-if="cell.block"
-                class="mt-0.5 truncate"
-                :title="cell.block.label"
-              >
-                {{ cell.block.label }}
-              </span>
-              <span
-                v-else-if="cell.closed"
-                class="mt-0.5 truncate"
-              >
-                Cerrado
-              </span>
-              <span
-                v-else-if="cell.open && mode === 'closed'"
-                class="mt-0.5 truncate text-success"
-                :title="cell.open.note ?? 'Abierto'"
-              >
-                {{ cell.open.note ?? 'Abierto' }}
-              </span>
+                <span
+                  v-if="cell.closed"
+                  class="mt-0.5 truncate"
+                >
+                  Cerrado
+                </span>
+                <span
+                  v-else-if="cell.openLabel"
+                  class="mt-0.5 truncate text-success"
+                  :title="cell.openLabel"
+                >
+                  {{ cell.openLabel }}
+                </span>
 
-              <span
-                v-if="cell.rate"
-                class="mt-auto pt-1 tabular-nums"
-                :class="cell.rate.overridden ? 'font-semibold text-warning' : 'text-muted'"
-                :title="cell.rate.overridden ? cell.rate.note ?? 'Precio fijado a mano' : 'Tarifa calculada'"
-              >
-                {{ formatMoney(cell.rate.nightly_cents, currency) }}
-              </span>
-            </button>
+                <span
+                  v-if="cell.rate"
+                  class="mt-auto tabular-nums"
+                  :class="cell.rate.overridden ? 'font-semibold text-warning' : 'text-muted'"
+                  :title="cell.rate.overridden ? cell.rate.note ?? 'Precio fijado a mano' : 'Tarifa calculada'"
+                >
+                  {{ formatMoney(cell.rate.nightly_cents, currency) }}
+                </span>
+              </button>
+
+              <!--
+                The pills sit above the cells, so they take the pointer and the
+                selection is made on the free part of a day instead.
+              -->
+              <div class="pointer-events-none absolute inset-0">
+                <button
+                  v-for="segment in weekSegments[week.index]"
+                  :key="segment.key"
+                  type="button"
+                  class="pointer-events-auto absolute flex h-6 items-center gap-1.5 overflow-hidden px-2 text-[11px] text-white shadow-sm transition hover:brightness-110"
+                  :class="[
+                    appearanceOf(segment.block).bg,
+                    segment.roundStart ? 'rounded-s-full' : '',
+                    segment.roundEnd ? 'rounded-e-full' : '',
+                    isPending(segment.block) ? 'opacity-70 ring-1 ring-inset ring-white/50' : ''
+                  ]"
+                  :style="pillStyle(segment)"
+                  :title="pillTitle(segment.block)"
+                  @click="inspectBlock(segment.block)"
+                >
+                  <UIcon
+                    :name="isPending(segment.block) ? 'i-lucide-clock' : appearanceOf(segment.block).icon"
+                    class="size-3.5 shrink-0"
+                  />
+                  <span class="truncate font-medium">{{ segment.block.label }}</span>
+                  <span
+                    v-if="segment.block.total_cents"
+                    class="ms-auto shrink-0 ps-2 tabular-nums"
+                  >
+                    {{ formatMoney(segment.block.total_cents, segment.block.currency ?? currency) }}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="mt-4 flex flex-wrap gap-4 text-xs text-muted">
-            <span class="flex items-center gap-1">
-              <span class="size-3 rounded bg-primary/40" /> Reserva directa
-            </span>
-            <span class="flex items-center gap-1">
-              <span class="size-3 rounded bg-airbnb/40" /> Canal externo
-            </span>
-            <span class="flex items-center gap-1">
-              <span class="size-3 rounded bg-neutral-500/40" /> Bloqueo manual
+            <span
+              v-for="(style, code) in { ...CHANNELS, synced: SYNCED_CLOSED }"
+              :key="code"
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="flex size-4 items-center justify-center rounded-full text-white"
+                :class="style.bg"
+              >
+                <UIcon
+                  :name="style.icon"
+                  class="size-2.5"
+                />
+              </span>
+              {{ style.name }}
             </span>
             <span
               v-if="mode === 'closed'"
@@ -651,7 +995,7 @@ useSeoMeta({ title: 'Calendario · Bonaire Patacona', robots: 'noindex, nofollow
           </div>
 
           <p class="mt-2 text-xs text-dimmed">
-            Haz clic en cada noche para irlas sumando, arrastra para tramos enteros, Mayúsculas amplía y Esc deselecciona. Volver a marcar una noche la quita.
+            Haz clic en cada noche para irlas sumando, arrastra para tramos enteros, Mayúsculas amplía y Esc deselecciona. Volver a marcar una noche la quita. Al pulsar una reserva se abren sus detalles.
           </p>
         </div>
       </div>
@@ -717,31 +1061,110 @@ useSeoMeta({ title: 'Calendario · Bonaire Patacona', robots: 'noindex, nofollow
         </div>
       </div>
 
+      <UModal
+        :open="Boolean(inspecting)"
+        :title="inspecting?.label ?? ''"
+        :description="inspecting ? `${formatDate(inspecting.start_date)} → ${formatDate(addDays(inspecting.end_date, -1))}` : ''"
+        @update:open="inspecting = null"
+      >
+        <template #body>
+          <div
+            v-if="inspecting"
+            class="flex flex-col gap-3 text-sm"
+          >
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                v-for="channel in inspecting.channels"
+                :key="channel"
+                color="neutral"
+                variant="subtle"
+                :icon="channelOf(channel).icon"
+              >
+                {{ channelOf(channel).label }}
+              </UBadge>
+            </div>
+
+            <p
+              v-if="inspecting.kind === 'external' && !inspecting.reservation"
+              class="text-muted"
+            >
+              El canal solo dice que estas fechas no están disponibles, sin decir
+              por qué.
+            </p>
+            <p
+              v-else-if="inspecting.kind === 'external' && !inspecting.declared"
+              class="text-muted"
+            >
+              Se cuenta como reserva del canal porque así está configurado:
+              Booking.com exporta igual una reserva suya que un bloqueo manual,
+              no lo dice en el calendario. Se cambia en Canales. Los datos del
+              huésped están en su extranet.
+            </p>
+            <p
+              v-else-if="inspecting.kind === 'external'"
+              class="text-muted"
+            >
+              El canal confirma que es una reserva suya. Los datos del huésped
+              solo están en su extranet.
+            </p>
+            <p
+              v-else
+              class="text-muted"
+            >
+              Bloqueo manual. Se quita seleccionando esas noches y pulsando
+              «Desbloquear».
+            </p>
+          </div>
+        </template>
+        <template #footer>
+          <div class="flex w-full justify-between gap-2">
+            <UButton
+              v-if="inspecting?.link"
+              icon="i-lucide-external-link"
+              variant="subtle"
+              :to="inspecting.link"
+              target="_blank"
+              rel="noopener"
+            >
+              Abrir en el canal
+            </UButton>
+            <UButton
+              class="ms-auto"
+              color="neutral"
+              variant="ghost"
+              @click="inspecting = null"
+            >
+              Cerrar
+            </UButton>
+          </div>
+        </template>
+      </UModal>
+
       <!-- Bulk edit of the selected nights -->
       <UModal
         v-model:open="showBulkModal"
         :title="`Editar ${selection.length} noche(s)`"
-        description="Lo que dejes en blanco se queda como está. El precio manda sobre la temporada y la tarifa base, y no se le suma el recargo de fin de semana."
+        description="Se guarda lo que veas: un campo vacío vuelve a la temporada o a la tarifa base. Un precio fijado a mano manda sobre ambas y no lleva recargo de fin de semana."
       >
         <template #body>
           <div class="flex flex-col gap-3">
             <UFormField
               label="Precio por noche (€)"
-              hint="En blanco: sin cambios"
+              hint="En blanco: vuelve a la tarifa"
             >
               <UInput
                 v-model="bulk.nightly"
-                placeholder="Sin cambios"
+                :placeholder="spread.nightly || 'Tarifa de temporada'"
                 class="w-full"
               />
             </UFormField>
             <UFormField
               label="Estancia mínima (noches)"
-              hint="En blanco: sin cambios"
+              hint="En blanco: vuelve a la tarifa"
             >
               <UInput
                 v-model="bulk.minNights"
-                placeholder="Sin cambios"
+                :placeholder="spread.minNights || 'Mínimo de temporada'"
                 class="w-full"
               />
             </UFormField>
@@ -755,6 +1178,18 @@ useSeoMeta({ title: 'Calendario · Bonaire Patacona', robots: 'noindex, nofollow
                 class="w-full"
               />
             </UFormField>
+
+            <p
+              v-if="spread.nightly || spread.minNights"
+              class="text-xs text-dimmed"
+            >
+              El rango en gris es lo que valen ahora estas noches, que no
+              coinciden entre sí. Lo que guardes se aplicará a todas por igual.
+            </p>
+            <p class="text-xs text-dimmed">
+              Vaciando el precio y la estancia mínima, estas noches vuelven por
+              completo a la tarifa: la nota se va con ellas.
+            </p>
           </div>
         </template>
         <template #footer>

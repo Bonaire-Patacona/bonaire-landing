@@ -62,6 +62,25 @@ const { data: bookings, refresh, pending } = await useAsyncData<Booking[]>(
   { watch: [statusFilter] }
 )
 
+// Arriving from a pill on the calendar: open that booking straight away, once.
+// The parameter is dropped as soon as it has been used — leaving it in the URL
+// would make the panel reopen itself the moment it is closed.
+const route = useRoute()
+const router = useRouter()
+const openedFromQuery = ref(false)
+
+watchEffect(() => {
+  const reference = String(route.query.ref ?? '')
+  if (!reference || openedFromQuery.value) return
+
+  const match = (bookings.value ?? []).find(booking => booking.reference === reference)
+  if (!match) return
+
+  openedFromQuery.value = true
+  selected.value = match
+  router.replace({ query: {} })
+})
+
 const filtered = computed(() => {
   const term = search.value.trim().toLowerCase()
   if (!term) return bookings.value ?? []

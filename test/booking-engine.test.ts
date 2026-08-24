@@ -7,7 +7,7 @@
  */
 import { buildQuote, nightlyRate, minNightsFor, depositFor, overridesByDay, planBalanceCharge, QuoteError } from '../server/utils/pricing'
 import { normaliseTiers, refundFor, tierFor } from '../server/utils/cancellation'
-import { parseIcs, buildIcs } from '../server/utils/ical'
+import { parseIcs, buildIcs, classifyExternalEvent } from '../server/utils/ical'
 import { eachNight, nightsBetween, addDays, isIsoDate, isWeekendNight } from '../server/utils/dates'
 import type { AppSettings, RateOverride, RatePeriod } from '../server/utils/types'
 
@@ -156,6 +156,31 @@ check('auto charge off falls back to the host', plan({ auto_charge_balance: fals
 // Booked less than balance_due_days_before the stay: the rest is due at once.
 check('due date already past charges today', plan({ balance_due_date: '2026-02-20' }), { status: 'scheduled', next_attempt_at: '2026-03-01T09:00:00.000Z' })
 check('no due date charges today', plan({ balance_due_date: null }), { status: 'scheduled', next_attempt_at: '2026-03-01T09:00:00.000Z' })
+
+// --- classifying imported events --------------------------------------------
+// Real summaries taken from the feeds this property syncs with.
+check('airbnb reservation', classifyExternalEvent('Reserved'), 'reservation')
+check('airbnb block', classifyExternalEvent('Airbnb (Not available)'), 'closed')
+check('booking.com says nothing useful', classifyExternalEvent('CLOSED - Not available'), 'closed')
+check('vrbo reservation', classifyExternalEvent('Reserved - John'), 'reservation')
+check('a closed marker beats a stray "reserved"', classifyExternalEvent('CLOSED - Reserved elsewhere'), 'closed')
+check('unknown summaries stay conservative', classifyExternalEvent('Blocked'), 'closed')
+check('no summary at all', classifyExternalEvent(''), 'closed')
+
+// Airbnb ships a deep link on a real reservation and nothing on a plain block.
+const airbnbReserved = parseIcs([
+  'BEGIN:VCALENDAR',
+  'BEGIN:VEVENT',
+  'DTSTART;VALUE=DATE:20261205',
+  'DTEND;VALUE=DATE:20261207',
+  'UID:res1@airbnb.com',
+  'SUMMARY:Reserved',
+  'DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/details/ABC123',
+  'END:VEVENT',
+  'END:VCALENDAR'
+].join('\r\n'))
+check('reservation link extracted', airbnbReserved[0]!.link, 'https://www.airbnb.com/hosting/reservations/details/ABC123')
+check('a feed without a description has no link', parseIcs('BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20260821\r\nDTEND;VALUE=DATE:20260828\r\nUID:x@booking.com\r\nSUMMARY:CLOSED - Not available\r\nEND:VEVENT\r\nEND:VCALENDAR')[0]!.link, undefined)
 
 // --- cancellation policies --------------------------------------------------
 const moderate = { tiers: normaliseTiers([{ days_before: 14, refund_pct: 100 }, { days_before: 7, refund_pct: 50 }]) }

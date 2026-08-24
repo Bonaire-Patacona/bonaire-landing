@@ -211,7 +211,17 @@ Either way *Abierto hasta (días vista)* keeps a rolling window: dates further
 out than that are not offered even if nothing occupies them, and the window
 moves forward on its own every day.
 
-In **Calendario** every cell shows what that night costs. Select cells — click,
+In **Calendario** every stay is drawn as a pill running from the middle of the
+arrival day to the middle of the departure day, so a changeover reads as one
+guest leaving and the next arriving rather than as a clash. Overlapping blocks
+stack instead of hiding each other, and a stay still waiting for payment is
+shown faded with a clock. Clicking a pill opens it: our own bookings in
+`/admin/bookings`, imported ones in place.
+
+A platform's colour and logo mean **a reservation from that platform**. Dates a
+channel merely closed are drawn neutral grey with a sync icon instead.
+
+Every cell also shows what that night costs. Select cells — click,
 drag, or shift-click — and the bar at the bottom acts on the whole run:
 
 | Action | What it does |
@@ -269,6 +279,35 @@ leaks (the channels then need the new URL).
 
 *Inbound* — add each channel's own export URL. They are pulled every 30 minutes
 by the `ical:sync` scheduled task, and **Sincronizar ahora** forces a run.
+
+*What the importer can and cannot tell.* Airbnb marks a real reservation
+`Reserved` and everything else `Airbnb (Not available)`; Booking.com exports
+every busy night as `CLOSED - Not available` whatever the reason. What each feed
+actually said is what gets stored, so `event_kind` never claims more than the
+channel did.
+
+For a channel that cannot say, **Sus fechas cerradas son reservas suyas** in
+`/admin/channels` decides how to read it. It is on for Booking.com and off
+elsewhere until you say otherwise, so by default every Booking.com closure shows
+as a Booking.com reservation. Two guards keep that from inventing bookings:
+
+- A closure sitting inside one of our own stays is dropped before any of this,
+  so a direct booking mirrored onto Booking.com never reappears as a Booking.com
+  reservation.
+- A channel that names the reservation outright wins over one that is only
+  assumed, so an Airbnb `Reserved` mirrored onto Booking.com still reads as the
+  Airbnb reservation it is.
+
+What remains is a real assumption: a night the host blocked in the Booking.com
+extranet is indistinguishable from a reservation there, and will show as one.
+Turn the setting off to have those drawn grey instead.
+
+Because the channels also import *our* calendar, one stay comes back to us from
+every channel it was pushed to. The calendar untangles that: blocks sitting
+inside one of our own bookings are dropped (that stay is already on the board),
+and whatever is left is merged into one pill per unavailable stretch carrying
+the icon of every channel reporting it. Availability is unaffected either way —
+a night blocked twice is still blocked once.
 
 A word on the gap: channel calendars refresh on their own schedule (Airbnb polls
 roughly hourly), so a same-day double booking is still physically possible. The

@@ -8,7 +8,7 @@
  * transient Airbnb outage must never free up dates that are actually sold.
  */
 import { assertNoDbError, getSettings, serviceClient } from './supabase'
-import { parseIcs } from './ical'
+import { classifyExternalEvent, parseIcs } from './ical'
 
 export interface FeedSyncResult {
   feed: string
@@ -49,6 +49,8 @@ export async function syncFeed(feed: {
       feed_id: feed.id,
       uid: evt.uid,
       summary: evt.summary,
+      event_kind: classifyExternalEvent(evt.summary),
+      link: evt.link ?? null,
       start_date: evt.start,
       end_date: evt.end,
       raw: evt.raw ?? null,

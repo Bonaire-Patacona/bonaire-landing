@@ -32,10 +32,14 @@ const {
 
 // shallowRef, not ref: DateValue instances carry private fields that Vue's deep
 // unwrapping would strip, and the calendar replaces the whole range anyway.
-const range = shallowRef<DateRange | null>(
+//
+// An empty range is `{ start: undefined, end: undefined }`, never null: reka-ui
+// reads `modelValue.start` while setting the calendar up, so null throws before
+// anything renders and takes the whole booking widget down with it.
+const range = shallowRef<DateRange>(
   props.initialCheckIn && props.initialCheckOut
     ? { start: isoToCalendarDate(props.initialCheckIn), end: isoToCalendarDate(props.initialCheckOut) }
-    : null
+    : { start: undefined, end: undefined }
 )
 const adults = ref(2)
 const children = ref(0)
@@ -64,6 +68,31 @@ const minCalendarDate = computed(() =>
   isoToCalendarDate(addDays(todayIso(), availability.value?.advance_notice_days ?? 1))
 )
 const maxCalendarDate = computed(() => isoToCalendarDate(addDays(todayIso(), 540)))
+
+// --- calendar headings -------------------------------------------------------
+// The component draws one combined title ("agosto - septiembre 2026") between
+// its arrows, which says nothing about which grid is which month. Only the text
+// is replaced: paging stays with the component, because reka-ui rebuilds the
+// grid from its own next/prev handlers and ignores a placeholder that lands on
+// a month already on screen.
+const MONTHS_SHOWN = 2
+
+/** Read-only mirror of where the calendar currently is. */
+const placeholder = shallowRef(isoToCalendarDate(todayIso()))
+
+const visibleMonths = computed(() =>
+  Array.from({ length: MONTHS_SHOWN }, (_, offset) => {
+    const start = new Date(Date.UTC(placeholder.value.year, placeholder.value.month - 1 + offset, 1))
+    return {
+      key: start.toISOString().slice(0, 7),
+      label: new Intl.DateTimeFormat(localeTag.value, {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC'
+      }).format(start)
+    }
+  })
+)
 
 const canSubmit = computed(() =>
   Boolean(quote.value?.available)
@@ -99,7 +128,8 @@ watch([adults, children, maxGuests], () => {
 const quoteErrorMessage = computed(() => {
   if (!quoteError.value) return null
   const key = `booking.errors.${quoteError.value.code}`
-  const translated = t(key)
+  // The server sends the limit that was broken; the locale string names it.
+  const translated = t(key, quoteError.value.params)
   return translated === key ? quoteError.value.message : translated
 })
 
@@ -136,11 +166,13 @@ async function submit() {
 
     await navigateTo(localePath(`/reserva/${response.reference}`))
   } catch (error) {
-    const err = error as { data?: { statusMessage?: string, data?: { code?: string } } }
-    const code = err.data?.data?.code
+    const err = error as { data?: { statusMessage?: string, data?: Record<string, unknown> } }
+    const { code, ...params } = err.data?.data ?? {}
     toast.add({
       title: t('booking.errors.title'),
-      description: code ? t(`booking.errors.${code}`) : (err.data?.statusMessage ?? t('booking.errors.unknown')),
+      description: code
+        ? t(`booking.errors.${code}`, params)
+        : (err.data?.statusMessage ?? t('booking.errors.unknown')),
       color: 'error',
       icon: 'i-lucide-circle-alert'
     })
@@ -178,14 +210,39 @@ async function submit() {
         <UCalendar
           v-else
           v-model="range"
+          v-model:placeholder="placeholder"
           range
-          :number-of-months="2"
+          :number-of-months="MONTHS_SHOWN"
           :min-value="minCalendarDate"
           :max-value="maxCalendarDate"
           :is-date-unavailable="isDateUnavailable"
           fixed-weeks
+          :year-controls="false"
+          :ui="{
+            // Float the arrows so the heading spans the full width and each
+            // month title lands over its own grid.
+            header: 'relative [&>button:first-child]:absolute [&>button:first-child]:left-0 [&>button:last-child]:absolute [&>button:last-child]:right-0',
+            heading: 'flex w-full gap-4 mx-0'
+          }"
           class="w-fit mx-auto"
-        />
+        >
+          <template #heading>
+            <span
+              v-for="month in visibleMonths"
+              :key="month.key"
+              class="flex-1 text-center first-letter:uppercase"
+            >
+              {{ month.label }}
+            </span>
+          </template>
+
+          <!-- A night that can still be booked reads heavier than a taken one. -->
+          <template #day="{ day: cell }">
+            <span :class="isDateUnavailable(cell) ? '' : 'font-semibold'">
+              {{ cell.day }}
+            </span>
+          </template>
+        </UCalendar>
 
         <p class="text-xs text-muted text-center">
           {{ $t('booking.calendarHint') }}

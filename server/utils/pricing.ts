@@ -9,7 +9,16 @@ import { addDays, eachNight, isWeekendNight, nightsBetween, today } from './date
 import type { AppSettings, BalanceChargeStatus, NightPrice, Quote, RateOverride, RateOverrideMap, RatePeriod } from './types'
 
 export class QuoteError extends Error {
-  constructor(readonly code: string, message: string) {
+  /**
+   * `details` travels to the browser next to the code, so the message the guest
+   * reads can name the actual limit ("minimum 5 nights") instead of a generic
+   * "that stay is too short" in eight languages.
+   */
+  constructor(
+    readonly code: string,
+    message: string,
+    readonly details: Record<string, number | string> = {}
+  ) {
     super(message)
   }
 }
@@ -164,19 +173,31 @@ export function buildQuote(
   const minNights = minNightsFor(checkIn, settings, periods, overrides)
 
   if (checkIn < addDays(now, settings.advance_notice_days)) {
-    throw new QuoteError('too_soon', `Bookings need ${settings.advance_notice_days} day(s) of notice`)
+    throw new QuoteError(
+      'too_soon',
+      `Bookings need ${settings.advance_notice_days} day(s) of notice`,
+      { days: settings.advance_notice_days }
+    )
   }
   if (checkIn > addDays(now, settings.booking_window_days)) {
     throw new QuoteError('too_far', 'That date is not open for booking yet')
   }
   if (nights < minNights) {
-    throw new QuoteError('min_nights', `Minimum stay is ${minNights} nights`)
+    throw new QuoteError('min_nights', `Minimum stay is ${minNights} nights`, { nights: minNights })
   }
   if (nights > settings.max_nights) {
-    throw new QuoteError('max_nights', `Maximum stay is ${settings.max_nights} nights`)
+    throw new QuoteError(
+      'max_nights',
+      `Maximum stay is ${settings.max_nights} nights`,
+      { nights: settings.max_nights }
+    )
   }
   if (guests > settings.max_guests) {
-    throw new QuoteError('max_guests', `This apartment sleeps up to ${settings.max_guests} guests`)
+    throw new QuoteError(
+      'max_guests',
+      `This apartment sleeps up to ${settings.max_guests} guests`,
+      { guests: settings.max_guests }
+    )
   }
 
   const breakdown = eachNight(checkIn, checkOut).map(day => nightlyRate(day, settings, periods, overrides))

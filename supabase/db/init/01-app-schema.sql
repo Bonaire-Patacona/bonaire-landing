@@ -405,6 +405,14 @@ create table if not exists public.ical_feeds (
   created_at      timestamptz not null default now()
 );
 
+-- Some channels never say whether a busy night is a booking of theirs or a
+-- block the host made: Booking.com exports both as 'CLOSED - Not available'.
+-- When this is on, everything that feed closes is taken to be a reservation of
+-- that channel. Null means "no opinion yet", which resolves to on for
+-- Booking.com and off elsewhere — an explicit true/false always wins.
+alter table public.ical_feeds
+  add column if not exists treat_closed_as_reservation boolean;
+
 create table if not exists public.external_blocks (
   id          uuid primary key default gen_random_uuid(),
   feed_id     uuid not null references public.ical_feeds (id) on delete cascade,
@@ -417,6 +425,17 @@ create table if not exists public.external_blocks (
   unique (feed_id, uid),
   constraint external_blocks_range_valid check (end_date > start_date)
 );
+
+-- What the channel actually told us. Only some feeds distinguish the two:
+-- Airbnb says 'Reserved' for a real booking, Booking.com exports every busy
+-- night as 'CLOSED - Not available' whatever the reason. So 'closed' means
+-- "unavailable, reason not disclosed", never "definitely not a booking".
+alter table public.external_blocks
+  add column if not exists event_kind text not null default 'closed'
+    check (event_kind in ('reservation', 'closed')),
+  -- Deep link back to the channel. Airbnb ships one on a real reservation;
+  -- Booking.com ships nothing at all.
+  add column if not exists link text;
 
 create index if not exists external_blocks_range_idx on public.external_blocks (start_date, end_date);
 

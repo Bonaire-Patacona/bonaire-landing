@@ -8,6 +8,7 @@ defineI18nRoute(false)
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 interface Feed {
+  treat_closed_as_reservation: boolean | null
   id: string
   name: string
   channel: string
@@ -81,6 +82,28 @@ async function removeFeed(feed: Feed) {
   const { error } = await supabase.from('ical_feeds').delete().eq('id', feed.id)
   if (error) {
     toast.add({ title: 'No se pudo eliminar', description: error.message, color: 'error' })
+    return
+  }
+  await refresh()
+}
+
+/**
+ * Booking.com exports a reservation of its own and a manual block as the same
+ * 'CLOSED - Not available', so the calendar cannot tell them apart from the
+ * feed. This says which way to read them. Null means "not decided", which is on
+ * for Booking.com and off for everyone else.
+ */
+const assumesReservations = (feed: Feed) =>
+  feed.treat_closed_as_reservation ?? feed.channel === 'booking'
+
+async function toggleAssumption(feed: Feed) {
+  const { error } = await supabase
+    .from('ical_feeds')
+    .update({ treat_closed_as_reservation: !assumesReservations(feed) })
+    .eq('id', feed.id)
+
+  if (error) {
+    toast.add({ title: 'No se pudo cambiar', description: error.message, color: 'error' })
     return
   }
   await refresh()
@@ -242,6 +265,16 @@ useSeoMeta({ title: 'Canales · Bonaire Patacona', robots: 'noindex, nofollow' }
                     {{ feed.last_status ?? 'pendiente' }}
                   </UBadge>
                 </div>
+
+                <UCheckbox
+                  :model-value="assumesReservations(feed)"
+                  class="mt-2"
+                  label="Sus fechas cerradas son reservas suyas"
+                  :description="assumesReservations(feed)
+                    ? 'Se pintan con el color y el logo del canal.'
+                    : 'Se pintan en gris como cerrado por sincronización.'"
+                  @update:model-value="toggleAssumption(feed)"
+                />
                 <p class="text-xs text-muted truncate font-mono">
                   {{ feed.url }}
                 </p>
