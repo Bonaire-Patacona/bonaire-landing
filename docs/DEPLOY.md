@@ -47,7 +47,7 @@ different secrets.
 Then fill in by hand:
 
 - `SITE_URL` — where the site lives, e.g. `https://bonairepatacona.com`
-- `SUPABASE_PUBLIC_URL` — where Kong lives, e.g. `https://supabase.bonairepatacona.com`
+- `SUPABASE_PUBLIC_URL` — where Kong lives, e.g. `https://api.bonairepatacona.com`
 - `SMTP_*` — needed for admin password resets and invitations
 - `STRIPE_*` — see step 4
 
