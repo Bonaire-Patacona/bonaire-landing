@@ -11,6 +11,7 @@ let client: SupabaseClient | null = null
  * In compose the app talks to Kong over the internal network
  * (NUXT_SUPABASE_INTERNAL_URL), which avoids a round trip through the public
  * domain and keeps working if the public URL is not resolvable from inside.
+ * Locally the same pair comes from SUPABASE_URL / SERVICE_ROLE_KEY in `.env`.
  */
 export function serviceClient(): SupabaseClient {
   if (client) return client
@@ -22,7 +23,7 @@ export function serviceClient(): SupabaseClient {
   if (!url || !key) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Supabase is not configured (NUXT_SUPABASE_INTERNAL_URL / NUXT_SUPABASE_SERVICE_KEY)'
+      statusMessage: 'Supabase is not configured (set SUPABASE_URL / SERVICE_ROLE_KEY in .env, or NUXT_SUPABASE_INTERNAL_URL / NUXT_SUPABASE_SERVICE_KEY at runtime)'
     })
   }
 

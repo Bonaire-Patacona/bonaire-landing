@@ -28,16 +28,19 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-only. Overridden at runtime by NUXT_* environment variables.
-    supabaseInternalUrl: '',
-    supabaseServiceKey: '',
-    stripeSecretKey: '',
-    stripeWebhookSecret: '',
-    icalSyncEnabled: 'true',
-    cronSecret: '',
+    // Server-only. Defaults are read from the plain variable names documented in
+    // `.env.example`, which is what `npm run dev` and a local `nuxt build` use.
+    // In compose the same values arrive as NUXT_* variables, which Nuxt applies
+    // on top of these at runtime — see docker-compose.yml.
+    supabaseInternalUrl: process.env.SUPABASE_URL || '',
+    supabaseServiceKey: process.env.SERVICE_ROLE_KEY || '',
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    icalSyncEnabled: process.env.ICAL_SYNC_ENABLED || 'true',
+    cronSecret: process.env.CRON_SECRET || '',
     public: {
-      siteUrl: 'https://bonairepatacona.com',
-      stripePublishableKey: ''
+      siteUrl: process.env.SITE_URL || 'https://bonairepatacona.com',
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
     }
   },
 

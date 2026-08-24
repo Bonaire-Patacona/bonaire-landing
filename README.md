@@ -12,9 +12,16 @@ iCal in both directions.
 
 ```bash
 npm install
-cp .env.example .env      # then fill SUPABASE_URL and SUPABASE_KEY
+cp .env.example .env
+node scripts/generate-supabase-keys.mjs >> .env   # JWT_SECRET, ANON_KEY, SERVICE_ROLE_KEY…
+docker compose up -d db auth rest kong migrator
 npm run dev
 ```
+
+The booking API needs `SUPABASE_URL` (the local Kong, `http://localhost:8000`),
+`SUPABASE_KEY` (the anon key) and `SERVICE_ROLE_KEY` in `.env`. Every variable is
+documented in `.env.example`, including how each one maps to the `NUXT_*` name
+that overrides it at runtime in Docker.
 
 | Command | What it does |
 |---|---|

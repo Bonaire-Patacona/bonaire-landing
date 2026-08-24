@@ -9,7 +9,7 @@ export function getStripe(): Stripe {
   if (!key) {
     throw createError({
       statusCode: 503,
-      statusMessage: 'Online payments are not configured (NUXT_STRIPE_SECRET_KEY)'
+      statusMessage: 'Online payments are not configured (set STRIPE_SECRET_KEY in .env, or NUXT_STRIPE_SECRET_KEY at runtime)'
     })
   }
 

@@ -79,10 +79,25 @@ at `SUPABASE_PUBLIC_URL`, protected by `DASHBOARD_USERNAME` / `DASHBOARD_PASSWOR
 The `Dockerfile` stands alone. Point it at Supabase Cloud or another Supabase
 instance and skip the rest of the compose file:
 
+A prebuilt image only reads the `NUXT_*` names at runtime (the plain ones are
+resolved when the image is built, where `.env` is not present), so pass those:
+
 ```bash
 docker build -t bonaire-landing .
-docker run -p 3000:3000 --env-file .env bonaire-landing
+docker run -p 3000:3000 --env-file .env \
+  -e NUXT_PUBLIC_SITE_URL="$SITE_URL" \
+  -e NUXT_PUBLIC_SUPABASE_URL="$SUPABASE_PUBLIC_URL" \
+  -e NUXT_PUBLIC_SUPABASE_KEY="$ANON_KEY" \
+  -e NUXT_SUPABASE_INTERNAL_URL="$SUPABASE_PUBLIC_URL" \
+  -e NUXT_SUPABASE_SERVICE_KEY="$SERVICE_ROLE_KEY" \
+  -e NUXT_STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY" \
+  -e NUXT_STRIPE_WEBHOOK_SECRET="$STRIPE_WEBHOOK_SECRET" \
+  -e NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="$STRIPE_PUBLISHABLE_KEY" \
+  bonaire-landing
 ```
+
+The full mapping between the `.env` names and their `NUXT_*` aliases is listed
+at the bottom of `.env.example`.
 
 ## 3. Create the first administrator
 
@@ -188,10 +203,22 @@ docker compose exec -T db psql -U supabase_admin -d postgres < my-change.sql
 ## Local development
 
 ```bash
-cp .env.example .env            # fill SUPABASE_URL and SUPABASE_KEY
+cp .env.example .env
+node scripts/generate-supabase-keys.mjs >> .env
 docker compose up -d db auth rest kong migrator
 npm install
 npm run dev
 ```
+
+`npm run dev` reads `.env` directly, and the booking API needs three values from
+it:
+
+- `SUPABASE_URL` — `http://localhost:8000` (Kong, as published by compose)
+- `SUPABASE_KEY` — the `ANON_KEY`, used by the browser
+- `SERVICE_ROLE_KEY` — used by `server/` only; without it `/api/availability`
+  answers *Supabase is not configured*
+
+Add `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` too if you want to walk
+through a payment; the rest of the flow works without them.
 
 `npm test` runs the pricing and iCal checks without needing any of it.
