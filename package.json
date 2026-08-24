@@ -4,8 +4,10 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "test": "esbuild test/booking-engine.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/booking-engine.test.mjs --log-level=error && node node_modules/.cache/booking-engine.test.mjs",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
+    "start": "node .output/server/index.mjs",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
@@ -17,10 +19,13 @@
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/i18n": "10.1.0",
     "@nuxtjs/sitemap": "^7.4.7",
-    "nuxt": "^4.1.2"
+    "@nuxtjs/supabase": "^1.6.2",
+    "nuxt": "^4.1.2",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.9.0",
+    "@types/node": "^26.2.0",
     "eslint": "^9.36.0",
     "typescript": "^5.9.2",
     "vue-tsc": "^3.0.8"

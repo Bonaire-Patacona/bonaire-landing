@@ -7,7 +7,7 @@
       orientation="horizontal"
       :links="[{
         label: $t('cta.bookNow'),
-        to: '#cta',
+        to: localePath('/reservar'),
         trailingIcon: 'i-lucide-arrow-right',
         size: 'xl'
       }]"
@@ -111,17 +111,25 @@
         description=""
         variant="subtle"
         :links="[{
+          label: $t('cta.direct'),
+          to: localePath('/reservar'),
+          trailingIcon: 'i-lucide-arrow-right',
+          color: 'primary',
+          size: 'lg'
+        }, {
           label: $t('cta.airbnb'),
           to: 'https://airbnb.es/h/bonaire-patacona',
           target: '_blank',
           trailingIcon: 'fa6-brands:airbnb',
-          color: 'airbnb'
+          color: 'airbnb',
+          variant: 'subtle'
         }, {
           label: $t('cta.booking'),
           to: 'https://www.booking.com/Share-LG3cjg',
           target: '_blank',
           trailingIcon: 'simple-icons:bookingdotcom',
-          color: 'primary'
+          color: 'neutral',
+          variant: 'subtle'
         }]"
       />
     </UPageSection>

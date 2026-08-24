@@ -4,7 +4,8 @@
     "guia": "Guide",
     "gallery": "Gallery",
     "reviews": "Reviews",
-    "contact": "Contact"
+    "contact": "Contact",
+    "book": "Book"
   },
   "site": {
     "title": "Bonaire Patacona Apartment",
@@ -94,7 +95,8 @@
     "title": "Check availability and book now!",
     "bookNow": "Book now",
     "airbnb": "Book on Airbnb",
-    "booking": "Book on Booking.com"
+    "booking": "Book on Booking.com",
+    "direct": "Book direct (best price)"
   },
   "testimonials": {
     "title": "Guest reviews",
@@ -106,5 +108,74 @@
     "guideTitle": "La Patacona and Valencia guide | Bonaire Patacona",
     "guideDescription": "Explore restaurants, beaches and things to do near Bonaire Patacona with our local guide to La Patacona, Alboraya and Valencia.",
     "imageAlt": "Terrace, pool and beach near Bonaire Patacona apartment in La Patacona, Valencia"
+  },
+  "booking": {
+    "pageTitle": "Book direct",
+    "pageDescription": "Pick your dates and book with no middleman fees. Secure payment with Stripe.",
+    "selectDates": "Pick your dates",
+    "checkInOut": "Check-in {in} · Check-out {out}",
+    "calendarHint": "Shaded days are already taken. Select your arrival, then your departure.",
+    "adults": "Adults",
+    "children": "Children",
+    "maxGuests": "Up to {n} guests",
+    "summary": "Summary",
+    "pickDatesFirst": "Choose your dates to see the price.",
+    "nights": "{n} night | {n} nights",
+    "guests": "{n} guest | {n} guests",
+    "guestsLabel": "Guests",
+    "nightsSubtotal": "Accommodation ({n} nights)",
+    "extraGuests": "Extra guests",
+    "cleaningFee": "Cleaning",
+    "taxes": "Taxes",
+    "total": "Total",
+    "payNow": "Due today",
+    "payLater": "Balance by {date}",
+    "securityDeposit": "Refundable damage deposit of {amount} (not charged now).",
+    "continue": "Continue",
+    "yourDetails": "Your details",
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "country": "Country",
+    "notes": "Anything we should know?",
+    "acceptTerms": "I accept the cancellation policy and the processing of my data.",
+    "payDeposit": "Pay {amount} and book",
+    "stripeNotice": "Payment is processed securely by Stripe. We never store your card details.",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "property": "Property",
+    "discount": {
+      "weekly": "Weekly discount ({pct}%)",
+      "monthly": "Monthly discount ({pct}%)"
+    },
+    "status": {
+      "pending": "Awaiting payment",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "expired": "Expired",
+      "completed": "Completed"
+    },
+    "errors": {
+      "title": "We could not complete the booking",
+      "unknown": "Something went wrong. Please try again.",
+      "unavailable": "Those dates are no longer available.",
+      "min_nights": "The minimum stay is longer for those dates.",
+      "max_nights": "That stay is too long.",
+      "max_guests": "The apartment cannot host that many guests.",
+      "too_soon": "We need a little more notice for those dates.",
+      "too_far": "We are not taking bookings that far ahead yet.",
+      "invalid_range": "Check-out must be after check-in."
+    },
+    "confirmation": {
+      "title": "Your booking",
+      "reference": "Reference",
+      "paid": "Paid",
+      "awaitingPayment": "Confirming your payment…",
+      "notFound": "We could not find that booking",
+      "notFoundHelp": "Check the link in your confirmation email.",
+      "paymentCancelled": "Payment not completed",
+      "paymentCancelledHelp": "Your dates are held for a little longer. You can try again.",
+      "help": "Any questions? Write to us at"
+    }
   }
 }

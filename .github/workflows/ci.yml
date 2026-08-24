@@ -1,0 +1,57 @@
+name: CI
+
+# Replaces the previous "Deploy to GitHub Pages" workflow.
+#
+# The site is no longer a static export: the booking engine, the Stripe webhook,
+# the iCal feeds and /admin all need a running server, so the app is deployed as
+# a container (see docs/DEPLOY.md) instead of being published to Pages. This
+# workflow only verifies that the app builds and behaves.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      # @nuxtjs/supabase resolves these at build time; the real values are
+      # injected at runtime through NUXT_PUBLIC_SUPABASE_URL / _KEY.
+      SUPABASE_URL: http://localhost:8000
+      SUPABASE_KEY: ci-placeholder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Booking engine tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build the production image
+        run: docker build -t bonaire-landing:ci .

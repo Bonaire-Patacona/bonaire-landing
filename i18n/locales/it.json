@@ -4,7 +4,8 @@
     "guia": "Guida",
     "gallery": "Galleria",
     "reviews": "Recensioni",
-    "contact": "Contatti"
+    "contact": "Contatti",
+    "book": "Prenota"
   },
   "site": {
     "title": "Appartamento Bonaire Patacona",
@@ -94,7 +95,8 @@
     "title": "Verifica la disponibilità e prenota ora!",
     "bookNow": "Prenota ora",
     "airbnb": "Prenota su Airbnb",
-    "booking": "Prenota su Booking.com"
+    "booking": "Prenota su Booking.com",
+    "direct": "Prenotazione diretta (miglior prezzo)"
   },
   "testimonials": {
     "title": "Recensioni degli ospiti",
@@ -106,5 +108,74 @@
     "guideTitle": "Guida di La Patacona e Valencia | Bonaire Patacona",
     "guideDescription": "Scopri ristoranti, spiagge e attività vicino a Bonaire Patacona con la nostra guida locale di La Patacona, Alboraya e Valencia.",
     "imageAlt": "Terrazza, piscina e spiaggia vicino all’appartamento Bonaire Patacona a La Patacona, Valencia"
+  },
+  "booking": {
+    "pageTitle": "Prenotazione diretta",
+    "pageDescription": "Scegli le date e prenota senza commissioni di intermediari. Pagamento sicuro con Stripe.",
+    "selectDates": "Scegli le date",
+    "checkInOut": "Check-in {in} · Check-out {out}",
+    "calendarHint": "I giorni ombreggiati sono già occupati. Seleziona l'arrivo e poi la partenza.",
+    "adults": "Adulti",
+    "children": "Bambini",
+    "maxGuests": "Massimo {n} ospiti",
+    "summary": "Riepilogo",
+    "pickDatesFirst": "Seleziona le date per vedere il prezzo.",
+    "nights": "{n} notte | {n} notti",
+    "guests": "{n} ospite | {n} ospiti",
+    "guestsLabel": "Ospiti",
+    "nightsSubtotal": "Soggiorno ({n} notti)",
+    "extraGuests": "Ospiti aggiuntivi",
+    "cleaningFee": "Pulizie",
+    "taxes": "Tasse",
+    "total": "Totale",
+    "payNow": "Da pagare ora",
+    "payLater": "Saldo entro il {date}",
+    "securityDeposit": "Cauzione rimborsabile di {amount} (non addebitata ora).",
+    "continue": "Continua",
+    "yourDetails": "I tuoi dati",
+    "fullName": "Nome e cognome",
+    "email": "Email",
+    "phone": "Telefono",
+    "country": "Paese",
+    "notes": "Qualcosa che dovremmo sapere?",
+    "acceptTerms": "Accetto la politica di cancellazione e il trattamento dei miei dati.",
+    "payDeposit": "Paga {amount} e prenota",
+    "stripeNotice": "Il pagamento è gestito in sicurezza da Stripe. Non conserviamo i dati della tua carta.",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "property": "Alloggio",
+    "discount": {
+      "weekly": "Sconto settimanale ({pct}%)",
+      "monthly": "Sconto mensile ({pct}%)"
+    },
+    "status": {
+      "pending": "In attesa di pagamento",
+      "confirmed": "Confermata",
+      "cancelled": "Annullata",
+      "expired": "Scaduta",
+      "completed": "Conclusa"
+    },
+    "errors": {
+      "title": "Non è stato possibile completare la prenotazione",
+      "unknown": "Si è verificato un errore. Riprova.",
+      "unavailable": "Quelle date non sono più disponibili.",
+      "min_nights": "Per quelle date il soggiorno minimo è più lungo.",
+      "max_nights": "Il soggiorno è troppo lungo.",
+      "max_guests": "L'appartamento non può ospitare così tante persone.",
+      "too_soon": "Per quelle date ci serve un po' più di preavviso.",
+      "too_far": "Non accettiamo ancora prenotazioni così lontane.",
+      "invalid_range": "La partenza deve essere successiva all'arrivo."
+    },
+    "confirmation": {
+      "title": "La tua prenotazione",
+      "reference": "Riferimento",
+      "paid": "Pagato",
+      "awaitingPayment": "Stiamo confermando il pagamento…",
+      "notFound": "Prenotazione non trovata",
+      "notFoundHelp": "Controlla il link nell'email di conferma.",
+      "paymentCancelled": "Pagamento non completato",
+      "paymentCancelledHelp": "Le date restano bloccate ancora per poco. Puoi riprovare.",
+      "help": "Domande? Scrivici a"
+    }
   }
 }

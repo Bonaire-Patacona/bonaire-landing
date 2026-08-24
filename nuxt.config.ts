@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxtjs/i18n', '@nuxtjs/sitemap'],
-
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxtjs/i18n', '@nuxtjs/sitemap', '@nuxtjs/supabase'],
   devtools: {
     enabled: true
   },
@@ -28,17 +27,43 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    // Server-only. Overridden at runtime by NUXT_* environment variables.
+    supabaseInternalUrl: '',
+    supabaseServiceKey: '',
+    stripeSecretKey: '',
+    stripeWebhookSecret: '',
+    icalSyncEnabled: 'true',
+    cronSecret: '',
+    public: {
+      siteUrl: 'https://bonairepatacona.com',
+      stripePublishableKey: ''
+    }
+  },
+
   routeRules: {
     '/': { prerender: true },
     '/guia': { prerender: true },
     '/sitemap.xml': { prerender: true },
-    '/robots.txt': { prerender: true }
+    '/robots.txt': { prerender: true },
+    // The booking flow and the back-office are dynamic.
+    '/reservar': { prerender: false },
+    '/reserva/**': { prerender: false },
+    '/admin/**': { ssr: false }
   },
 
   compatibilityDate: '2025-01-15',
 
   nitro: {
-    preset: 'static'
+    experimental: {
+      tasks: true
+    },
+    scheduledTasks: {
+      // Pull Airbnb / Booking.com calendars in.
+      '*/30 * * * *': ['ical:sync'],
+      // Release expired holds, close past stays.
+      '*/10 * * * *': ['bookings:housekeeping']
+    }
   },
 
   eslint: {
@@ -75,6 +100,18 @@ export default defineNuxtConfig({
   sitemap: {
     autoLastmod: true,
     discoverImages: true,
-    exclude: ['/__nuxt_error']
+    exclude: ['/__nuxt_error', '/admin/**', '/reserva/**']
+  },
+
+  supabase: {
+    // Access control is handled by app/middleware/admin.ts, not by the module's
+    // global redirect (which would also guard the public landing pages).
+    redirect: false,
+    types: false,
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    }
   }
 })

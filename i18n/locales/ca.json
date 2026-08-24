@@ -4,7 +4,8 @@
     "guia": "Guia",
     "gallery": "Galeria",
     "reviews": "Ressenyes",
-    "contact": "Contacte"
+    "contact": "Contacte",
+    "book": "Reservar"
   },
   "site": {
     "title": "Apartament Bonaire Patacona",
@@ -94,7 +95,8 @@
     "title": "Comprova la disponibilitat i reserva ara!",
     "bookNow": "Reserva ara",
     "airbnb": "Reserva a Airbnb",
-    "booking": "Reserva a Booking.com"
+    "booking": "Reserva a Booking.com",
+    "direct": "Reserva directa (millor preu)"
   },
   "testimonials": {
     "title": "Ressenyes dels hostes",
@@ -106,5 +108,74 @@
     "guideTitle": "Guia de La Patacona i València | Bonaire Patacona",
     "guideDescription": "Descobreix restaurants, platges i plans prop de l’apartament Bonaire Patacona amb la nostra guia local de La Patacona, Alboraia i València.",
     "imageAlt": "Terrassa, piscina i platja prop de l’apartament Bonaire Patacona a La Patacona, València"
+  },
+  "booking": {
+    "pageTitle": "Reserva directa",
+    "pageDescription": "Tria les dates i reserva sense comissions d'intermediaris. Pagament segur amb Stripe.",
+    "selectDates": "Tria les dates",
+    "checkInOut": "Entrada {in} · Eixida {out}",
+    "calendarHint": "Els dies ombrejats ja estan ocupats. Selecciona l'entrada i després l'eixida.",
+    "adults": "Adults",
+    "children": "Xiquets",
+    "maxGuests": "Màxim {n} hostes",
+    "summary": "Resum",
+    "pickDatesFirst": "Selecciona les dates per veure el preu.",
+    "nights": "{n} nit | {n} nits",
+    "guests": "{n} hoste | {n} hostes",
+    "guestsLabel": "Hostes",
+    "nightsSubtotal": "Allotjament ({n} nits)",
+    "extraGuests": "Hostes addicionals",
+    "cleaningFee": "Neteja",
+    "taxes": "Impostos",
+    "total": "Total",
+    "payNow": "A pagar ara",
+    "payLater": "Resta abans del {date}",
+    "securityDeposit": "Fiança reemborsable de {amount} (ara no es cobra).",
+    "continue": "Continuar",
+    "yourDetails": "Les teues dades",
+    "fullName": "Nom i cognoms",
+    "email": "Correu electrònic",
+    "phone": "Telèfon",
+    "country": "País",
+    "notes": "Alguna cosa que hàgem de saber?",
+    "acceptTerms": "Accepte la política de cancel·lació i el tractament de les meues dades.",
+    "payDeposit": "Pagar {amount} i reservar",
+    "stripeNotice": "El pagament es processa de manera segura amb Stripe. No guardem les dades de la teua targeta.",
+    "checkIn": "Entrada",
+    "checkOut": "Eixida",
+    "property": "Allotjament",
+    "discount": {
+      "weekly": "Descompte setmanal ({pct}%)",
+      "monthly": "Descompte mensual ({pct}%)"
+    },
+    "status": {
+      "pending": "Pendent de pagament",
+      "confirmed": "Confirmada",
+      "cancelled": "Cancel·lada",
+      "expired": "Caducada",
+      "completed": "Finalitzada"
+    },
+    "errors": {
+      "title": "No s'ha pogut completar la reserva",
+      "unknown": "S'ha produït un error inesperat. Torna-ho a provar.",
+      "unavailable": "Aquestes dates ja no estan disponibles.",
+      "min_nights": "L'estada mínima és més llarga per a aquestes dates.",
+      "max_nights": "L'estada és massa llarga.",
+      "max_guests": "L'apartament no admet tants hostes.",
+      "too_soon": "Necessitem una mica més d'antelació per a aquestes dates.",
+      "too_far": "Encara no acceptem reserves tan llunyanes.",
+      "invalid_range": "L'eixida ha de ser posterior a l'entrada."
+    },
+    "confirmation": {
+      "title": "La teua reserva",
+      "reference": "Referència",
+      "paid": "Pagat",
+      "awaitingPayment": "Estem confirmant el pagament…",
+      "notFound": "No hem trobat aquesta reserva",
+      "notFoundHelp": "Comprova l'enllaç del correu de confirmació.",
+      "paymentCancelled": "Pagament no completat",
+      "paymentCancelledHelp": "Les dates continuen bloquejades una estona. Pots tornar-ho a intentar.",
+      "help": "Algun dubte? Escriu-nos a"
+    }
   }
 }

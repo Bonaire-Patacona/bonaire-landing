@@ -4,7 +4,8 @@
     "guia": "Gids",
     "gallery": "Galerij",
     "reviews": "Beoordelingen",
-    "contact": "Contact"
+    "contact": "Contact",
+    "book": "Boeken"
   },
   "site": {
     "title": "Appartement Bonaire Patacona",
@@ -94,7 +95,8 @@
     "title": "Bekijk de beschikbaarheid en boek nu!",
     "bookNow": "Boek nu",
     "airbnb": "Boek op Airbnb",
-    "booking": "Boek op Booking.com"
+    "booking": "Boek op Booking.com",
+    "direct": "Direct boeken (beste prijs)"
   },
   "testimonials": {
     "title": "Beoordelingen van gasten",
@@ -106,5 +108,74 @@
     "guideTitle": "Gids voor La Patacona en Valencia | Bonaire Patacona",
     "guideDescription": "Ontdek restaurants, stranden en activiteiten bij Bonaire Patacona met onze lokale gids voor La Patacona, Alboraya en Valencia.",
     "imageAlt": "Terras, zwembad en strand bij appartement Bonaire Patacona in La Patacona, Valencia"
+  },
+  "booking": {
+    "pageTitle": "Direct boeken",
+    "pageDescription": "Kies je data en boek zonder tussenpersoonkosten. Veilig betalen met Stripe.",
+    "selectDates": "Kies je data",
+    "checkInOut": "Inchecken {in} · Uitchecken {out}",
+    "calendarHint": "Gearceerde dagen zijn al bezet. Kies eerst de aankomst en daarna het vertrek.",
+    "adults": "Volwassenen",
+    "children": "Kinderen",
+    "maxGuests": "Maximaal {n} gasten",
+    "summary": "Overzicht",
+    "pickDatesFirst": "Kies je data om de prijs te zien.",
+    "nights": "{n} nacht | {n} nachten",
+    "guests": "{n} gast | {n} gasten",
+    "guestsLabel": "Gasten",
+    "nightsSubtotal": "Verblijf ({n} nachten)",
+    "extraGuests": "Extra gasten",
+    "cleaningFee": "Schoonmaak",
+    "taxes": "Belastingen",
+    "total": "Totaal",
+    "payNow": "Nu te betalen",
+    "payLater": "Restant vóór {date}",
+    "securityDeposit": "Terugbetaalbare borg van {amount} (wordt nu niet afgeschreven).",
+    "continue": "Doorgaan",
+    "yourDetails": "Jouw gegevens",
+    "fullName": "Volledige naam",
+    "email": "E-mail",
+    "phone": "Telefoon",
+    "country": "Land",
+    "notes": "Iets wat we moeten weten?",
+    "acceptTerms": "Ik ga akkoord met het annuleringsbeleid en de verwerking van mijn gegevens.",
+    "payDeposit": "Betaal {amount} en boek",
+    "stripeNotice": "De betaling verloopt veilig via Stripe. Wij bewaren je kaartgegevens niet.",
+    "checkIn": "Inchecken",
+    "checkOut": "Uitchecken",
+    "property": "Accommodatie",
+    "discount": {
+      "weekly": "Weekkorting ({pct}%)",
+      "monthly": "Maandkorting ({pct}%)"
+    },
+    "status": {
+      "pending": "Wacht op betaling",
+      "confirmed": "Bevestigd",
+      "cancelled": "Geannuleerd",
+      "expired": "Verlopen",
+      "completed": "Afgerond"
+    },
+    "errors": {
+      "title": "De boeking kon niet worden voltooid",
+      "unknown": "Er ging iets mis. Probeer het opnieuw.",
+      "unavailable": "Die data zijn niet meer beschikbaar.",
+      "min_nights": "Voor die data geldt een langer minimumverblijf.",
+      "max_nights": "Dit verblijf is te lang.",
+      "max_guests": "Het appartement biedt geen plaats aan zoveel gasten.",
+      "too_soon": "Voor die data hebben we iets meer tijd nodig.",
+      "too_far": "Zo ver vooruit nemen we nog geen boekingen aan.",
+      "invalid_range": "Uitchecken moet na inchecken liggen."
+    },
+    "confirmation": {
+      "title": "Jouw boeking",
+      "reference": "Referentie",
+      "paid": "Betaald",
+      "awaitingPayment": "We bevestigen je betaling…",
+      "notFound": "Boeking niet gevonden",
+      "notFoundHelp": "Controleer de link in je bevestigingsmail.",
+      "paymentCancelled": "Betaling niet voltooid",
+      "paymentCancelledHelp": "Je data blijven nog even gereserveerd. Je kunt het opnieuw proberen.",
+      "help": "Vragen? Mail ons op"
+    }
   }
 }

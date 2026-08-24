@@ -4,7 +4,6 @@ import * as locales from '@nuxt/ui/locale'
 
 const siteUrl = 'https://bonairepatacona.com'
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 const route = useRoute()
 
 const currentUrl = computed(() => new URL(route.fullPath, siteUrl).toString())
@@ -75,66 +74,12 @@ useSeoMeta({
   twitterDescription: seoDescription,
   twitterCard: 'summary_large_image'
 })
-
-const items = computed(() => [{
-  label: t('menu.home'),
-  icon: 'fa6-solid:house',
-  to: localePath('/')
-},
-{
-  label: t('menu.guia'),
-  icon: 'fa6-solid:book',
-  to: localePath('/guia')
-}])
 </script>
 
 <template>
   <UApp :locale="locales[locale]">
-    <UHeader>
-      <template #left>
-        <NuxtLink :to="localePath('/')">
-          <AppLogo class="w-auto h-14 shrink-0 p-1" />
-        </NuxtLink>
-      </template>
-      <UNavigationMenu :items="items" />
-      <template #right>
-        <UButton
-          to="#cta"
-          size="md"
-          color="primary"
-          variant="solid"
-          class="ml-4"
-        >
-          {{ $t('cta.bookNow') }}
-        </UButton>
-        <UColorModeButton />
-        <LanguageSwitcher />
-      </template>
-      <template #body>
-        <UNavigationMenu
-          :items="items"
-          orientation="vertical"
-          class="-mx-2.5"
-        />
-      </template>
-    </UHeader>
-
-    <UMain>
+    <NuxtLayout>
       <NuxtPage />
-    </UMain>
-
-    <USeparator icon="fa6-brands:airbnb" />
-
-    <UFooter>
-      <template #left>
-        <p class="text-sm text-muted">
-          Bonaire Patacona © {{ new Date().getFullYear() }}
-        </p>
-      </template>
-
-      <template #right>
-        <LanguageSwitcher />
-      </template>
-    </UFooter>
+    </NuxtLayout>
   </UApp>
 </template>
